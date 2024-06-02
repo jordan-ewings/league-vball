@@ -61,9 +61,9 @@ export function ContCard({ children, title, footer }) {
 
   return (
     <div className="cont-card">
-      <div className="cont-card-title">{title}</div>
+      <div className="cont-card-title">{title && <span>{title}</span>}</div>
       <div className="cont-card-body">{children}</div>
-      <div className="cont-card-footer">{footer}</div>
+      <div className="cont-card-footer">{footer && <span>{footer}</span>}</div>
     </div>
   );
 

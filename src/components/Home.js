@@ -1,15 +1,14 @@
 /* ---------------------------------- */
 // Home
 
-import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, memo, useRef, createRef } from 'react';
 import { useSession } from '../contexts/SessionContext';
 
-/* ---------------------------------- */
-// memoize props shortcut
-// arg is an array of props, each of which is either a value/object or a function
-// use useMemo and useCallback accordingly
-
-
+import {
+  ContCard,
+  MenuItem,
+  RadioMenuItem
+} from './common';
 
 /* ---------------------------------- */
 
@@ -22,29 +21,22 @@ export default function Home() {
       </div>
       <div className="main-body">
         <LeagueSelect />
+        <AdminAccess />
+        <TeamSelect />
       </div>
     </div>
   );
 }
 
 /* ---------------------------------- */
-// league select (memoized)
+// league select
 
 function LeagueSelect() {
-
-  const createRadioMenuOption = (league) => {
-    const main = league.title.split(' ')[0] + ' Night';
-    const sub = league.title.split(' ').slice(2).join(' ');
-    return (
-      <div className="d-flex justify-content-between align-items-center column-gap-2">
-        <span>{main}</span>
-        <span className="sub-main">{sub}</span>
-      </div>
-    );
-  }
+  console.log('LeagueSelect');
 
   const { session, setLeague } = useSession();
-  const options = useMemo(() => {
+  const userLeague = useMemo(() => session.league, [session.league]);
+  const leagues = useMemo(() => {
     const leagues = Object.values(session.leagues);
     leagues.sort((a, b) => {
       if (a.season != b.season) return a.season - b.season;
@@ -54,16 +46,234 @@ function LeagueSelect() {
       return days.indexOf(a.league) - days.indexOf(b.league);
     });
     return leagues;
-  });
+  }, [session.leagues]);
+
+  // handle option selection
+  // if league is already selected, do nothing
+  const handleChange = useCallback((leagueId) => {
+    setLeague(leagueId);
+  }, [setLeague]);
 
   return (
-    <div id="league-select-container">
-      <ContCard title="SELECT LEAGUE">
-        <RadioMenu onChange={handleChange} options={options} value={value} />
-      </ContCard>
+    <ContCard title="SELECT LEAGUE">
+      <div className="radio-menu">
+        {leagues.map(league => {
+          const main1 = league.title.split(' ')[0] + ' Night';
+          const main2 = league.title.split(' ').slice(2).join(' ');
+          const title = (
+            <div className="d-flex justify-content-start align-items-center column-gap-2">
+              <span>{main1}</span>
+              <span className="sub-main">{main2}</span>
+            </div>
+          );
+
+          return (
+            <RadioMenuItem
+              key={league.id}
+              title={title}
+              selected={league.id == userLeague.id}
+              onClick={() => handleChange(league.id)}
+            />
+          );
+
+        })}
+      </div>
+    </ContCard>
+  );
+}
+
+/* ---------------------------------- */
+// admin access
+
+function AdminAccess() {
+
+  const { session, login, logout, setAdminControls } = useSession();
+  const { admin, adminControls } = session;
+
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const passwordRef = useRef(null);
+
+  const handleSignIn = async () => {
+    setLoading(true);
+    setErrorMsg('');
+    const password = passwordRef.current.value;
+    await login(password)
+      .then(user => {
+        setLoading(false);
+        console.log('Sign in successful');
+      })
+      .catch(error => {
+        setLoading(false);
+        setErrorMsg('Incorrect password');
+        console.log('Sign in failed:', error);
+        passwordRef.current.value = '';
+      });
+  };
+
+  const handleSignOut = async () => {
+    await logout();
+  };
+
+  const handleAdminControls = (e) => {
+    setAdminControls(e.target.checked);
+  };
+
+  return (
+    <ContCard title="ADMIN ACCESS">
+      {admin ? (
+        <>
+          <MenuItem
+            className="logged-in-form"
+            main="Enable Controls"
+            trail={<Switch checked={adminControls} onChange={handleAdminControls} />}
+          />
+          <MenuItem
+            className="logout-form"
+            main={<ButtonInline text="Logout" onClick={handleSignOut} />}
+          />
+        </>
+      ) : (
+        <MenuItem
+          className="login-form"
+          main={<input type="password" placeholder="Enter password..." ref={passwordRef} />}
+          trail={loading ? <Spinner /> : <ButtonInline icon="fa-regular fa-circle-right" onClick={handleSignIn} />}
+        />
+      )}
+    </ContCard>
+  );
+}
+
+/* ---------------------------------- */
+// TeamSelect
+
+function TeamSelect() {
+
+  const { session, setFavTeam } = useSession();
+  const { favTeam } = session;
+  const teams = Object.values(session.teams);
+
+  const handleChange = useCallback((teamName) => {
+    setFavTeam(teamName);
+  }, [setFavTeam]);
+
+  return (
+    <ContCard title="MY TEAM">
+      <div className="radio-menu">
+        {teams.map(team => {
+          return (
+            <RadioMenuItem
+              key={team.id}
+              title={<TeamLabel team={team} isFav={team.name == favTeam} />}
+              selected={team.name == favTeam}
+              onClick={() => handleChange(team.name)}
+            />
+          );
+        })}
+      </div>
+    </ContCard>
+  );
+}
+
+/* ---------------------------------- */
+
+const TeamLabel = ({ team, isFav }) => {
+  return (
+    <div className="team-label d-flex justify-content-start align-items-center column-gap-2">
+      <span className="team-nbr">{team.nbr}</span>
+      <span className="team-name">{team.name}</span>
+      {isFav && <i className="fa-solid fa-user fav-team"></i>}
     </div>
   );
 }
+
+/* ---------------------------------- */
+
+const Switch = ({ checked, onChange }) => {
+  return (
+    <div className="form-check form-switch">
+      <input className="form-check-input" type="checkbox" role="switch" checked={checked} onChange={onChange} />
+    </div>
+  );
+}
+
+const Spinner = () => {
+  return (
+    <div className="spinner-border spinner-border-sm"></div>
+  );
+}
+
+const ButtonInline = ({ text, icon, onClick }) => {
+  return (
+    <div role="button" onClick={onClick}>
+      {icon && <i className={icon}></i>}
+      <span>{text}</span>
+    </div>
+  );
+}
+
+
+
+// return (
+//   <ContCard title="ADMIN ACCESS" footer={admin ? 'Enable controls to edit game results and team stats.' : errorMsg}>
+//     {admin ? (
+//       <>
+//         <MenuItem
+//           className="logged-in-form"
+//           main="Enable Controls"
+//           trail={
+//             <div className="form-check form-switch">
+//               <input
+//                 className="form-check-input"
+//                 type="checkbox"
+//                 id="admin-switch"
+//                 checked={adminControls}
+//                 onChange={handleAdminControls}
+//               />
+//             </div>
+//           }
+//         />
+//         <MenuItem
+//           className="logout-form"
+//           main={
+//             <div role="button" onClick={handleSignOut}>
+//               <span>Logout</span>
+//             </div>
+//           }
+//         />
+//       </>
+//     ) : (
+//       <MenuItem
+//         className="login-form"
+//         main={
+//           <input
+//             type="password"
+//             placeholder="Enter password..."
+//             ref={passwordRef}
+//           />
+//         }
+//         trail={
+//           !loading ? (
+//             <div role="button" onClick={handleSignIn}>
+//               <i className="fa-regular fa-circle-right"></i>
+//             </div>
+//           ) : (
+//             <div className="spinner-border spinner-border-sm"></div>
+//           )
+//         }
+//       />
+//     )}
+//   </ContCard>
+// );
+
+// }
+
+
+
+
+
+
+
 
 
 

@@ -159,23 +159,6 @@ export function SessionProvider({ children }) {
   }
 
   /* ---------------------------------- */
-  // methods to retrieve session data
-  /* ---------------------------------- */
-
-  // const readSession = {
-  //   leagues: () => session.leagues,
-  //   league: () => session.league,
-  //   teams: () => session.teams,
-  //   weeks: () => session.weeks,
-  //   games: () => session.games,
-  //   user: () => session.user,
-  //   admin: () => session.admin,
-  //   adminControls: () => session.adminControls,
-  //   favTeam: () => session.favTeam
-  // };
-
-
-  /* ---------------------------------- */
   // value for context provider
   /* ---------------------------------- */
 
