@@ -2,14 +2,16 @@
 // Footer
 
 import React, { useMemo } from 'react';
-import { useSession } from '../contexts/SessionContext';
+import { useLeague } from '../contexts/SessionContext';
 
 /* ---------------------------------- */
 
 export default function Footer() {
 
-  const { session } = useSession();
-  const leagueTitle = useMemo(() => session.league.title, [session.league.title]);
+  const { loading, league } = useLeague();
+  const leagueTitle = useMemo(() => league?.title, [league]);
+
+  if (loading) return null;
 
   return (
     <footer className='footer'>

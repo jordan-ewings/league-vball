@@ -4,7 +4,7 @@
 import React, { useEffect } from 'react'; // npm install react
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'; // npm install react-router-dom
 import { Container } from 'react-bootstrap'; // npm install react-bootstrap
-import { SessionProvider } from './contexts/SessionContext';
+import { ContextProvider } from './contexts/SessionContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './components/Home';
@@ -17,7 +17,7 @@ export default function App() {
 
   return (
     <Router>
-      <SessionProvider>
+      <ContextProvider>
         <Navbar />
         <Container>
           <Routes>
@@ -27,7 +27,7 @@ export default function App() {
           </Routes>
         </Container>
         <Footer />
-      </SessionProvider>
+      </ContextProvider>
     </Router>
   )
 }
