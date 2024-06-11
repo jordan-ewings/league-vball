@@ -8,6 +8,11 @@ import { db } from "../firebase";
 const store = new Map();
 const subscribers = new Map();
 
+/* ---------------------------------- */
+// useFirebase
+// sync store with firebase
+// on data change, update store and notify subscribers
+
 export function useFirebase(reference) {
 
   initReference(reference);
