@@ -2,7 +2,7 @@
 // session context
 
 import React, { useContext, useReducer, useState, useEffect, useMemo, useCallback, useSyncExternalStore } from "react";
-import { get, child, ref, onValue } from "firebase/database";
+import { get, child, ref, onValue, set } from "firebase/database";
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
 import { auth, db } from "../firebase";
 
@@ -119,16 +119,6 @@ function LeagueProvider({ children }) {
   useEffect(() => {
     const init = async () => {
 
-      // const dbLeague = leagues[leagueId];
-      // const dbTeams = await get(child(ref(db), 'teams/' + leagueId)).then(s => s.val());
-      // const dbWeeks = await get(child(ref(db), 'weeks/' + leagueId)).then(s => s.val());
-      // const dbGames = await get(child(ref(db), 'games/' + leagueId)).then(s => s.val());
-
-      // setLeague(dbLeague);
-      // setTeams(dbTeams);
-      // setWeeks(dbWeeks);
-      // setGames(dbGames);
-
       setLeague(leagues[leagueId]);
       setTeams(await get(child(ref(db), 'teams/' + leagueId)).then(s => s.val()));
       setGames(await get(child(ref(db), 'games/' + leagueId)).then(s => s.val()));
@@ -192,129 +182,90 @@ export function ContextProvider({ children }) {
 }
 
 /* ---------------------------------- */
-// REPLACEMENT FOR LEAGUE CONTEXT
-// SWITCH TO EXTERNAL STORE
-// components can access whatever parts of the store they need. E.g.:
-// useLeagueData('leagues')
-// useLeagueData('teams')
-// useLeagueData('weeks')
 
-// can also set up a listener for a specific database path.
-// when path provided, will setup onValue listener for that path
-// e.g.:
-// useLeagueData('games', 'WK01')
-// useLeagueData('games', 'WK01/GM01')
-// sequence of events:
-// 1. check if live firebase listener already exists for path
-// 2a. if it does, add requestor to list of subscribers for that path
-// 2b. if it does not, create new listener for path (onValue), create subscriber list for path and add requestor to list
-// 3. return data from store for that path
+const store = new Map();
+const subscribers = new Map();
 
-// class LeagueDataStore {
+export function useFirebase(reference) {
 
-//   constructor() {
-//     this.loading = true;
-//     this.leagues = {};
-//     this.leagueId = Storage.get('leagueId');
-//     this.league = {};
+  initReference(reference);
+  return useSyncExternalStore(
+    (callback) => subscribe(reference, callback),
+    () => getSnapshot(reference)
+  );
+}
 
-//     this.teams = {};
-//     this.weeks = {};
-//     this.games = {};
+export function readFirebase(reference) {
+  return getSnapshot(reference);
 
-//     this.activeListeners = {};
-//     this.subscribers = {};
-//     this.init();
-//   }
+}
 
-//   // get leagues, validate leagueId, get league data
-//   async init() {
+function initReference(reference) {
+  if (!reference) return;
+  if (store.has(reference)) return;
 
-//     this.leagues = await get(child(ref(db), 'leagues')).then(s => s.val());
-//     const defaultId = Object.keys(this.leagues)[0];
-//     const hasInvalidId = !this.leagueId || !this.leagues[this.leagueId];
-//     if (hasInvalidId) {
-//       this.leagueId = defaultId;
-//       Storage.set('leagueId', defaultId);
+  store.set(reference, null);
+  console.log('New reference:', reference);
+  const dbRef = ref(db, reference);
+  onValue(dbRef, (snapshot) => {
+    const data = snapshot.val();
+    store.set(reference, data);
+    if (subscribers.has(reference)) {
+      subscribers.get(reference).forEach((cb) => cb(data));
+    }
+    // if (typeof data === 'object') {
+    //   setupOrUpdateChildSubscribers(reference, data);
+    // }
+  });
+}
+
+// function setupOrUpdateChildSubscribers(reference, data) {
+//   Object.keys(data).forEach((key) => {
+//     const childRef = `${reference}/${key}`;
+//     const childData = data[key];
+//     const isObject = typeof childData === 'object';
+//     const childStore = store.get(childRef);
+
+//     const hasChanged = isObject
+//       ? JSON.stringify(childData) !== JSON.stringify(childStore)
+//       : childData !== childStore;
+
+//     if (hasChanged) {
+//       store.set(childRef, childData);
+//       if (subscribers.has(childRef)) {
+//         subscribers.get(childRef).forEach((cb) => cb(childData));
+//       }
 //     }
 
-//     this.league = this.leagues[this.leagueId];
-//     this.fetchLeagueData();
-//   }
-
-//   // on leagueId change
-//   async setLeagueId(newLeagueId) {
-
-
-//   }
-
-//   // get data for current leagueId
-//   async fetchStaticLeagueData() {
-//     const id = this.leagueId;
-//     this.teams = await get(child(ref(db), 'teams/' + id)).then(s => s.val());
-//     this.weeks = await get(child(ref(db), 'weeks/' + id)).then(s => s.val());
-//     this.games = await get(child(ref(db), 'games/' + id)).then(s => s.val());
-//     this.loading = false;
-//   }
-
-
-//   // subscriptions
-//   async subscribe(path, callback) {
-
-//     if (!this.activeListeners[path]) {
-//       this.activeListeners[path] = onValue(child(ref(db), path), s => {
-//         const data = s.val();
-//         this.subscribers[path].forEach(cb => cb(data));
-//       });
+//     if (isObject) {
+//       setupOrUpdateChildSubscribers(childRef, childData);
 //     }
-
-//     if (!this.subscribers[path]) {
-//       this.subscribers[path] = [];
-//     }
-
-//     this.subscribers[path].push(callback);
-
-
-
-//   }
-
-
-
-
-
-
-
+//   });
 // }
 
-// const dataStore = new LeagueDataStore();
+function subscribe(reference, callback) {
+  if (!reference) return;
+  if (!subscribers.has(reference)) {
+    subscribers.set(reference, new Set());
+  }
+  subscribers.get(reference).add(callback);
 
-// // won't set up/sync a firebase listener
-// // e.g.:
-// // useLeagueData('leagues')
-// // useLeagueData('teams/T01')
-// export function useLeagueDataOnce(path) {
+  // Call the callback immediately with the current data
+  if (store.has(reference)) {
+    callback(store.get(reference));
+  }
 
-//   return useSyncExternalStore(
-//     () => dataStore.subscribeOnce(path),
-//     () => dataStore.getSnapshot(path)
-//   );
-// }
+  return () => {
+    const callbackSet = subscribers.get(reference);
+    if (callbackSet) {
+      callbackSet.delete(callback);
+      if (callbackSet.size === 0) {
+        subscribers.delete(reference);
+      }
+    }
+  };
+}
 
-// // will set up/sync a firebase listener (unless one already exists, in which case it will add to the existing listener)
-// // e.g.:
-// // useLeagueData('games', 'WK01')
-// // useLeagueData('games', 'WK01/GM01')
-// export function useLeagueData(path) {
-
-//   return useSyncExternalStore(
-//     () => dataStore.subscribe(path),
-//     () => dataStore.getSnapshot(path)
-//   );
-// }
-
-
-//   // return useSyncExternalStore(
-//   //   () => dataStore.subscribe(keyArr, () => { }),
-//   //   () => dataStore.getSnapshot(keyArr)
-//   // );
-// // }
+function getSnapshot(reference) {
+  return store.get(reference);
+}

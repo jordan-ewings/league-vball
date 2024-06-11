@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useOptions } from '../../contexts/SessionContext';
+import { useOptions, useLeague, useFirebase } from '../../contexts/SessionContext';
 
 /* ---------------------------------- */
 // stdChild
@@ -94,15 +94,17 @@ export function RadioMenuItem({ title, selected = false, onClick }) {
 /* ---------------------------------- */
 // TeamLabel
 
-export function TeamLabel({ team, record = false }) {
-
+export function TeamLabel({ team, withRecord = false }) {
   const { favTeam } = useOptions();
+  const { leagueId } = useLeague();
+  const recordPath = withRecord ? `teams/${leagueId}/${team.id}/stats/games/record` : null;
+  const record = useFirebase(recordPath);
 
   return (
     <div className="team-label d-flex justify-content-start align-items-center column-gap-2">
       <span className="team-nbr">{team.nbr}</span>
       <span className="team-name">{team.name}</span>
-      {record && <span className="team-record">{team.record}</span>}
+      {record && <span className="team-record">{record}</span>}
       {team.name == favTeam && <i className="fa-solid fa-user fav-team"></i>}
     </div>
   );

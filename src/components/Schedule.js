@@ -2,8 +2,8 @@
 // Schedule
 
 import React, { useState, useEffect, useMemo, useCallback, memo, useRef, createRef } from 'react';
-import { useAuth, useLeague, useOptions } from '../contexts/SessionContext';
-import { get, child, ref, onValue, off, set } from "firebase/database";
+import { useAuth, useLeague, useOptions, useFirebase, readFirebase } from '../contexts/SessionContext';
+import { get, child, ref, onValue, off, set, update } from "firebase/database";
 import {
   Collapse,
   Spinner,
@@ -14,6 +14,7 @@ import {
   MenuItem,
   RadioMenuItem,
   TeamLabel,
+  TeamLabelWithRecord,
   Switch,
   ButtonInline,
 } from './common';
@@ -83,6 +84,7 @@ function WeekGames({ weekId }) {
       Object.keys(game.teams).forEach((teamId) => {
         const team = teams[teamId];
         game.teams[teamId] = {
+          id: teamId,
           nbr: team.nbr,
           name: team.name,
         };
@@ -127,7 +129,6 @@ function GameItem({ game }) {
   const { controls } = useAuth();
 
   const [teams, setTeams] = useState(game.teams);
-  const [matches, setMatches] = useState(game.matches);
   const [formMatches, setFormMatches] = useState(null);
   const [form, setForm] = useState(false);
   const [pending, setPending] = useState(false);
@@ -137,49 +138,34 @@ function GameItem({ game }) {
   const matchIds = useMemo(() => Object.keys(game.matches), [game.matches]);
 
   /* ---------------------------------- */
-  // matches and team record queries
+  // matches listener
 
-  useEffect(() => {
-    const matchesRef = ref(db, `games/${leagueId}/${game.week}/${game.id}/matches`);
-    const handleValueChange = snapshot => handleMatchUpdates(snapshot.val());
-    onValue(matchesRef, handleValueChange);
-    return () => off(matchesRef, 'value', handleValueChange);
-  }, [game.id, leagueId, game.week]);
+  const matchesRefPath = `games/${leagueId}/${game.week}/${game.id}/matches`;
+  const matches = useFirebase(matchesRefPath);
 
-  useEffect(() => {
-    const recordRefs = [];
-    teamIds.forEach(teamId => {
-      const recordRef = ref(db, `teams/${leagueId}/${teamId}/stats/games/record`);
-      const handleValueChange = snapshot => {
-        setTeams(prevTeams => {
-          const newTeams = { ...prevTeams };
-          newTeams[teamId].record = snapshot.val();
-          return newTeams;
-        });
-      };
-      recordRefs.push(recordRef);
-      onValue(recordRef, handleValueChange);
-    });
-    return () => recordRefs.forEach(ref => off(ref));
-  }, [game.id, leagueId, teamIds]);
-
-  const handleMatchUpdates = (newMatches) => {
-    setMatches(newMatches);
+  const handleMatchUpdates = () => {
     if (form && pending) {
       setPending(false);
       setForm(false);
     }
     if (form && !pending) {
-      setFormMatches(JSON.parse(JSON.stringify(newMatches)));
+      setFormMatches(JSON.parse(JSON.stringify(matches)));
       setAlert('Game updated by another user.');
     }
-  }
+  };
+
+  useEffect(() => {
+    if (matches) {
+      handleMatchUpdates();
+    }
+  }, [matches]);
 
   /* ---------------------------------- */
   // interaction handlers
 
   // match item click
   const handleMatchItemClick = (matchId, teamId) => {
+    if (!form) return;
     const newMatches = JSON.parse(JSON.stringify(formMatches));
     const match = newMatches[matchId];
     if (!teamId) {
@@ -230,6 +216,23 @@ function GameItem({ game }) {
     });
   }
 
+  // save button click - actual version
+  // need to update matches along with team records
+  const handleSaveReal = async () => {
+
+    setPending(true);
+    const updates = {};
+    updates[matchesRefPath] = formMatches;
+
+    // calculate change in team records
+    const weekGames = await get(child(ref(db), `games/${leagueId}/${game.week}`)).then(s => s.val());
+    teamIds.forEach(teamId => {
+
+      const teamGames = Object.values(weekGames).filter(g => g.teams[teamId]);
+
+    })
+  }
+
   /* ---------------------------------- */
   // render functions
 
@@ -257,17 +260,20 @@ function GameItem({ game }) {
   /* ---------------------------------- */
   // return
 
+  if (!matches) return null;
+
+  console.log('Render');
   return (
     <div className={`game-item ${form ? 'game-item-form' : ''}`}>
       <div className="row g-0">
         <div className={`main-col ${controls ? 'col-8' : 'col-9'} `}>
           <div className="team-col">
-            <TeamLabel team={teams[teamIds[0]]} record={true} />
-            <TeamLabel team={teams[teamIds[1]]} record={true} />
+            <TeamLabel team={teams[teamIds[0]]} withRecord />
+            <TeamLabel team={teams[teamIds[1]]} withRecord />
           </div>
           <div className="matches-col">
             {matchIds.map(matchId => (
-              <div key={matchId} className="match-col" data-match_id={matchId}>
+              <div key={matchId} className="match-col">
                 {renderTeamMatchItem(matchId, teamIds[0])}
                 {renderTeamMatchItem(matchId, teamIds[1])}
                 {renderCancelMatchItem(matchId)}
@@ -307,6 +313,27 @@ function GameItem({ game }) {
 }
 
 /* ---------------------------------- */
+
+// function ToggleIcon({
+//   on = false,
+//   icon = 'bi bi-circle',
+//   iconOn = 'bi bi-check-circle',
+//   className = '',
+//   classOnModifier = 'picked',
+//   onClick
+// }) {
+
+//   const iconClass = (on && iconOn) ? iconOn : icon;
+//   const divClass = (on && classOnModifier) ? className + ' ' + classOnModifier : className;
+
+//   return (
+//     <div className={divClass} {...(onClick && { onClick })}>
+//       <i className={iconClass}></i>
+//     </div>
+//   );
+
+// }
+
 
 
 
