@@ -11,6 +11,7 @@ import {
 } from 'react-bootstrap';
 
 import {
+  MainHeader,
   ContCard,
   MenuItem,
   RadioMenuItem,
@@ -37,9 +38,9 @@ export default function Schedule() {
 
   return (
     <div className="section">
-      <div className="main-header mb-3 mt-1">
+      <MainHeader>
         {!loading && <WeekButtons weeks={weeks} activeWeek={activeWeek} setActiveWeek={setActiveWeek} />}
-      </div>
+      </MainHeader>
       <div className="main-body">
         {!loading && activeWeek && <WeekGames weekId={activeWeek} />}
       </div>
@@ -224,40 +225,57 @@ function GameItem({ game }) {
     const updates = {};
     updates[matchesRefPath] = formMatches;
 
-    // calculate change in team records
-    const allGames = await get(child(ref(db), `games/${leagueId}`)).then(s => s.val());
-    teamIds.forEach(teamId => {
-      const stats = {
-        overall: { count: 0, wins: 0, losses: 0, record: '0-0', winPct: 0 },
-        week: { count: 0, wins: 0, losses: 0, record: '0-0', winPct: 0 },
-      };
+    // if all games in matches are PRE or CNCL and all games in formMatches are PRE or CNCL, then no need to update team records
+    let updateRecords = false;
+    matchIds.forEach(matchId => {
+      const match = matches[matchId];
+      const formMatch = formMatches[matchId];
+      if (match.status == 'POST' || formMatch.status == 'POST') {
+        if (match.status != formMatch.status) {
+          updateRecords = true;
+        } else {
+          if (match.winner != formMatch.winner) {
+            updateRecords = true;
+          }
+        }
+      }
+    });
 
-      Object.keys(allGames).forEach(wId => {
-        Object.values(allGames[wId]).forEach(g => {
-          if (!g.teams[teamId]) return;
+    if (updateRecords) {
+      const allGames = await get(child(ref(db), `games/${leagueId}`)).then(s => s.val());
+      teamIds.forEach(teamId => {
+        const stats = {
+          overall: { count: 0, wins: 0, losses: 0, record: '0-0', winPct: 0 },
+          week: { count: 0, wins: 0, losses: 0, record: '0-0', winPct: 0 },
+        };
 
-          const matchesPost = (g.id == gameId)
-            ? Object.values(formMatches).filter(m => m.status == 'POST')
-            : Object.values(g.matches).filter(m => m.status == 'POST');
+        Object.keys(allGames).forEach(wId => {
+          Object.values(allGames[wId]).forEach(g => {
+            if (!g.teams[teamId]) return;
 
-          matchesPost.forEach(m => {
-            const pushKeys = ['overall'];
-            if (wId == weekId) pushKeys.push('week');
-            pushKeys.forEach(key => {
-              stats[key].count++;
-              stats[key].wins += (m.winner == teamId) ? 1 : 0;
-              stats[key].losses += (m.winner != teamId) ? 1 : 0;
-              stats[key].record = `${stats[key].wins}-${stats[key].losses}`;
-              stats[key].winPct = stats[key].wins / stats[key].count;
+            const matchesPost = (g.id == gameId)
+              ? Object.values(formMatches).filter(m => m.status == 'POST')
+              : Object.values(g.matches).filter(m => m.status == 'POST');
+
+            matchesPost.forEach(m => {
+              const pushKeys = ['overall'];
+              if (wId == weekId) pushKeys.push('week');
+              pushKeys.forEach(key => {
+                stats[key].count++;
+                stats[key].wins += (m.winner == teamId) ? 1 : 0;
+                stats[key].losses += (m.winner != teamId) ? 1 : 0;
+                stats[key].record = `${stats[key].wins}-${stats[key].losses}`;
+                stats[key].winPct = stats[key].wins / stats[key].count;
+              });
             });
           });
         });
+
+        updates[`teams/${leagueId}/${teamId}/stats/games`] = stats.overall;
+        updates[`stats/${leagueId}/${weekId}/${teamId}/games`] = stats.week;
+
       });
-
-      updates[`teams/${leagueId}/${teamId}/stats/games`] = stats.overall;
-      updates[`stats/${leagueId}/${weekId}/${teamId}/games`] = stats.week;
-
-    });
+    }
 
     console.log('updates:', updates);
     await update(ref(db), updates);

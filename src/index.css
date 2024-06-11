@@ -339,6 +339,10 @@ td:first-child {
   padding: 0 .75rem;
 }
 
+.padded-sides {
+  padding: 0 .75rem;
+}
+
 /* --------------- radios --------------- */
 
 .radio-menu .trail i {

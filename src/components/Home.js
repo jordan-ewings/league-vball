@@ -5,6 +5,7 @@ import React, { useState, useEffect, useMemo, useCallback, memo, useRef, createR
 import { useAuth, useLeague, useOptions } from '../contexts/SessionContext';
 
 import {
+  MainHeader,
   ContCard,
   MenuItem,
   RadioMenuItem,
@@ -20,9 +21,7 @@ export default function Home() {
 
   return (
     <div className="section">
-      <div className="main-header mb-3 mt-1 hidden">
-
-      </div>
+      <MainHeader />
       <div className="main-body">
         <LeagueSelect />
         <AdminAccess />
@@ -64,18 +63,20 @@ function LeagueSelect() {
   useEffect(() => { if (!loading) setDidMount(true); }, [loading]);
 
   return (
-    <ContCard title="SELECT LEAGUE" loading={!didMount}>
-      <div className="radio-menu">
-        {options.map(o => (
-          <RadioMenuItem
-            key={o.id}
-            title={createTitle(o.title)}
-            selected={o.id == leagueId}
-            onClick={() => setLeagueId(o.id)}
-          />
-        ))}
-      </div>
-    </ContCard>
+    <div id="league-select-container">
+      <ContCard title="SELECT LEAGUE" loading={!didMount}>
+        <div className="radio-menu">
+          {options.map(o => (
+            <RadioMenuItem
+              key={o.id}
+              title={createTitle(o.title)}
+              selected={o.id == leagueId}
+              onClick={() => setLeagueId(o.id)}
+            />
+          ))}
+        </div>
+      </ContCard>
+    </div>
   );
 }
 
@@ -104,28 +105,30 @@ function AdminAccess() {
   }
 
   return (
-    <ContCard title="ADMIN ACCESS" {...(errorMsg && { footer: (<span className="invalid-msg">{errorMsg}</span>) })} >
-      {!admin && (
-        <MenuItem
-          className="login-form"
-          main={<input type="password" placeholder="Enter password..." ref={passwordRef} />}
-          trail={loading ? <Spinner /> : <ButtonInline icon="fa-regular fa-circle-right" onClick={handleSignIn} />}
-        />
-      )}
-      {admin && (
-        <MenuItem
-          className="logged-in-form"
-          main="Enable Controls"
-          trail={<Switch checked={controls} onChange={() => setControls(!controls)} />}
-        />
-      )}
-      {admin && (
-        <MenuItem
-          className="logout-form"
-          main={<ButtonInline text="Logout" onClick={logout} />}
-        />
-      )}
-    </ContCard>
+    <div id="admin-container">
+      <ContCard title="ADMIN ACCESS" {...(errorMsg && { footer: (<span className="invalid-msg">{errorMsg}</span>) })} >
+        {!admin && (
+          <MenuItem
+            className="login-form"
+            main={<input type="password" placeholder="Enter password..." ref={passwordRef} />}
+            trail={loading ? <Spinner /> : <ButtonInline icon="fa-regular fa-circle-right" onClick={handleSignIn} />}
+          />
+        )}
+        {admin && (
+          <MenuItem
+            className="logged-in-form"
+            main="Enable Controls"
+            trail={<Switch checked={controls} onChange={() => setControls(!controls)} />}
+          />
+        )}
+        {admin && (
+          <MenuItem
+            className="logout-form"
+            main={<ButtonInline text="Logout" onClick={logout} />}
+          />
+        )}
+      </ContCard>
+    </div>
   );
 }
 
@@ -148,21 +151,23 @@ function TeamSelect() {
   useEffect(() => { if (!loading) setDidMount(true); }, [loading]);
 
   return (
-    <ContCard title="MY TEAM" loading={!didMount}>
-      <div className="radio-menu">
-        {sortedTeams.map(team => {
-          const isFav = team.name == favTeam;
-          return (
-            <RadioMenuItem
-              key={team.id}
-              title={<TeamLabel team={team} />}
-              selected={isFav}
-              onClick={() => setFavTeam(isFav ? null : team.name)}
-            />
-          );
-        })}
-      </div>
-    </ContCard>
+    <div id="team-select-container">
+      <ContCard title="MY TEAM" loading={!didMount}>
+        <div className="radio-menu">
+          {sortedTeams.map(team => {
+            const isFav = team.name == favTeam;
+            return (
+              <RadioMenuItem
+                key={team.id}
+                title={<TeamLabel team={team} />}
+                selected={isFav}
+                onClick={() => setFavTeam(isFav ? null : team.name)}
+              />
+            );
+          })}
+        </div>
+      </ContCard>
+    </div>
   );
 }
 

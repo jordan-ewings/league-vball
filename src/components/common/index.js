@@ -10,6 +10,17 @@ function stdChild(arg) {
 }
 
 /* ---------------------------------- */
+// MainHeader
+
+export function MainHeader({ children }) {
+  return (
+    <div className={`main-header ${children ? 'mb-3 mt-1' : ''}`}>
+      {children}
+    </div>
+  )
+}
+
+/* ---------------------------------- */
 // ContCard
 
 export function ContCard({ children,
@@ -18,14 +29,6 @@ export function ContCard({ children,
   className = '',
   loading = false,
 }) {
-
-  const renderBody = () => {
-    return loading ? (
-      <MenuItem main={<Spinner />} />
-    ) : (
-      children
-    );
-  }
 
   return (
     <div className={`cont-card ${className}`}>
