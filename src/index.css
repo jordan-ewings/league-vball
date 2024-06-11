@@ -361,6 +361,16 @@ td:first-child {
   transition: all 0.5s ease;
 }
 
+/* --------------- TeamLabel --------------- */
+
+.team-label {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  column-gap: .4rem;
+}
+
 /* --------------- LEAGUE SELECT --------------- */
 
 .form-select {

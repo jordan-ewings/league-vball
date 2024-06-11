@@ -36,12 +36,6 @@ function AuthProvider({ children }) {
       setUser(newUser);
       setAdmin(newUser && !newUser.isAnonymous);
       setControls(newUser && !newUser.isAnonymous);
-
-      console.log('AUTH:', {
-        user: newUser,
-        admin: newUser && !newUser.isAnonymous,
-        controls: newUser && !newUser.isAnonymous
-      });
     });
 
     return () => unsubscribe();
@@ -182,90 +176,4 @@ export function ContextProvider({ children }) {
 }
 
 /* ---------------------------------- */
-
-const store = new Map();
-const subscribers = new Map();
-
-export function useFirebase(reference) {
-
-  initReference(reference);
-  return useSyncExternalStore(
-    (callback) => subscribe(reference, callback),
-    () => getSnapshot(reference)
-  );
-}
-
-export function readFirebase(reference) {
-  return getSnapshot(reference);
-
-}
-
-function initReference(reference) {
-  if (!reference) return;
-  if (store.has(reference)) return;
-
-  store.set(reference, null);
-  console.log('New reference:', reference);
-  const dbRef = ref(db, reference);
-  onValue(dbRef, (snapshot) => {
-    const data = snapshot.val();
-    store.set(reference, data);
-    if (subscribers.has(reference)) {
-      subscribers.get(reference).forEach((cb) => cb(data));
-    }
-    // if (typeof data === 'object') {
-    //   setupOrUpdateChildSubscribers(reference, data);
-    // }
-  });
-}
-
-// function setupOrUpdateChildSubscribers(reference, data) {
-//   Object.keys(data).forEach((key) => {
-//     const childRef = `${reference}/${key}`;
-//     const childData = data[key];
-//     const isObject = typeof childData === 'object';
-//     const childStore = store.get(childRef);
-
-//     const hasChanged = isObject
-//       ? JSON.stringify(childData) !== JSON.stringify(childStore)
-//       : childData !== childStore;
-
-//     if (hasChanged) {
-//       store.set(childRef, childData);
-//       if (subscribers.has(childRef)) {
-//         subscribers.get(childRef).forEach((cb) => cb(childData));
-//       }
-//     }
-
-//     if (isObject) {
-//       setupOrUpdateChildSubscribers(childRef, childData);
-//     }
-//   });
-// }
-
-function subscribe(reference, callback) {
-  if (!reference) return;
-  if (!subscribers.has(reference)) {
-    subscribers.set(reference, new Set());
-  }
-  subscribers.get(reference).add(callback);
-
-  // Call the callback immediately with the current data
-  if (store.has(reference)) {
-    callback(store.get(reference));
-  }
-
-  return () => {
-    const callbackSet = subscribers.get(reference);
-    if (callbackSet) {
-      callbackSet.delete(callback);
-      if (callbackSet.size === 0) {
-        subscribers.delete(reference);
-      }
-    }
-  };
-}
-
-function getSnapshot(reference) {
-  return store.get(reference);
-}
+// hooks

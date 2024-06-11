@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useOptions, useLeague, useFirebase } from '../../contexts/SessionContext';
+import { useOptions, useLeague } from '../../contexts/SessionContext';
+import { useFirebase } from '../../hooks/useFirebase';
 
 /* ---------------------------------- */
 // stdChild
@@ -101,7 +102,7 @@ export function TeamLabel({ team, withRecord = false }) {
   const record = useFirebase(recordPath);
 
   return (
-    <div className="team-label d-flex justify-content-start align-items-center column-gap-2">
+    <div className="team-label">
       <span className="team-nbr">{team.nbr}</span>
       <span className="team-name">{team.name}</span>
       {record && <span className="team-record">{record}</span>}

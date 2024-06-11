@@ -2,7 +2,8 @@
 // Schedule
 
 import React, { useState, useEffect, useMemo, useCallback, memo, useRef, createRef } from 'react';
-import { useAuth, useLeague, useOptions, useFirebase, readFirebase } from '../contexts/SessionContext';
+import { useAuth, useLeague, useOptions } from '../contexts/SessionContext';
+import { useFirebase } from '../hooks/useFirebase';
 import { get, child, ref, onValue, off, set, update } from "firebase/database";
 import {
   Collapse,
@@ -34,7 +35,7 @@ export default function Schedule() {
     setActiveWeek(nextWeek ? nextWeek.id : finalWeek.id);
   }, [loading, weeks]);
 
-  return !loading && (
+  return (
     <div className="section">
       <div className="main-header mb-3 mt-1">
         <WeekButtons weeks={weeks} activeWeek={activeWeek} setActiveWeek={setActiveWeek} />
@@ -75,7 +76,7 @@ function WeekButtons({ weeks, activeWeek, setActiveWeek }) {
 
 function WeekGames({ weekId }) {
 
-  const { loading, games, teams } = useLeague();
+  const { games, teams } = useLeague();
 
   const gamesForWeek = useMemo(() => {
     const weekGames = games[weekId];
@@ -136,11 +137,13 @@ function GameItem({ game }) {
 
   const teamIds = useMemo(() => Object.keys(game.teams), [game.teams]);
   const matchIds = useMemo(() => Object.keys(game.matches), [game.matches]);
+  const weekId = useMemo(() => game.week, [game.week]);
+  const gameId = useMemo(() => game.id, [game.id]);
 
   /* ---------------------------------- */
   // matches listener
 
-  const matchesRefPath = `games/${leagueId}/${game.week}/${game.id}/matches`;
+  const matchesRefPath = `games/${leagueId}/${weekId}/${gameId}/matches`;
   const matches = useFirebase(matchesRefPath);
 
   const handleMatchUpdates = () => {
@@ -204,33 +207,52 @@ function GameItem({ game }) {
     setAlert(null);
   }
 
-  // save button click - testing version, wont actually push changes
-  const handleSave = async () => { 
-    setPending(true);
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        handleMatchUpdates(formMatches);
-        resolve();
-      }, 1000);
-
-    });
-  }
-
   // save button click - actual version
   // need to update matches along with team records
-  const handleSaveReal = async () => {
+  const handleSave = async () => {
 
     setPending(true);
     const updates = {};
     updates[matchesRefPath] = formMatches;
 
     // calculate change in team records
-    const weekGames = await get(child(ref(db), `games/${leagueId}/${game.week}`)).then(s => s.val());
+    const allGames = await get(child(ref(db), `games/${leagueId}`)).then(s => s.val());
     teamIds.forEach(teamId => {
+      const stats = {
+        overall: { count: 0, wins: 0, losses: 0, record: '0-0', winPct: 0 },
+        week: { count: 0, wins: 0, losses: 0, record: '0-0', winPct: 0 },
+      };
 
-      const teamGames = Object.values(weekGames).filter(g => g.teams[teamId]);
+      Object.keys(allGames).forEach(wId => {
+        Object.values(allGames[wId]).forEach(g => {
 
-    })
+          if (!g.teams[teamId]) return;
+
+          const matchesPost = (g.id == gameId)
+            ? Object.values(formMatches).filter(m => m.status == 'POST')
+            : Object.values(g.matches).filter(m => m.status == 'POST');
+          
+          matchesPost.forEach(m => {
+            ['overall', 'week'].forEach(key => {
+              if (key == 'week' && wId != weekId) return;
+              const s = stats[key];
+              s.count++;
+              s.wins += (m.winner == teamId) ? 1 : 0;
+              s.losses += (m.winner != teamId) ? 1 : 0;
+              s.record = `${s.wins}-${s.losses}`;
+              s.winPct = s.wins / s.count;
+            });
+          });
+        });
+      });
+
+      updates[`teams/${leagueId}/${teamId}/stats/games`] = stats.overall;
+      updates[`stats/${leagueId}/${weekId}/${teamId}/games`] = stats.week;
+
+    });
+
+    console.log('updates:', updates);
+    await update(ref(db), updates);
   }
 
   /* ---------------------------------- */
@@ -238,7 +260,7 @@ function GameItem({ game }) {
 
   // add on click if form
   const renderTeamMatchItem = (matchId, teamId) => {
-    const match = (formMatches) ? formMatches[matchId] : matches[matchId];
+    const match = (formMatches) ? formMatches[matchId] : (matches) ? matches[matchId] : null;
     const isWinner = (match && match.winner) ? match.winner == teamId : false;
     return (
       <div className="match-item result" onClick={() => handleMatchItemClick(matchId, teamId)}>
@@ -248,7 +270,7 @@ function GameItem({ game }) {
   };
 
   const renderCancelMatchItem = (matchId) => {
-    const match = (formMatches) ? formMatches[matchId] : matches[matchId];
+    const match = (formMatches) ? formMatches[matchId] : (matches) ? matches[matchId] : null;
     const isCancelled = (match && match.status) ? match.status == 'CNCL' : false;
     return (
       <div className={`match-item cancel ${isCancelled ? 'picked' : ''}`} onClick={() => handleMatchItemClick(matchId)}>
@@ -260,9 +282,9 @@ function GameItem({ game }) {
   /* ---------------------------------- */
   // return
 
-  if (!matches) return null;
+  // if (!matches) return null;
 
-  console.log('Render');
+  // console.log('Render');
   return (
     <div className={`game-item ${form ? 'game-item-form' : ''}`}>
       <div className="row g-0">
