@@ -2,7 +2,7 @@
 // app
 
 import React, { useEffect } from 'react'; // npm install react
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'; // npm install react-router-dom
+import { HashRouter as Router, Routes, Route } from 'react-router-dom'; // npm install react-router-dom
 import { Container } from 'react-bootstrap'; // npm install react-bootstrap
 import { ContextProvider } from './contexts/SessionContext';
 import Navbar from './components/Navbar';
