@@ -241,7 +241,6 @@
   align-self: stretch;
   background-color: var(--ios-bg-tertiary);
   border-color: var(--ios-bg-tertiary);
-  background-color: #30D158;
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23ffffff'/%3e%3c/svg%3e");
 }
 
@@ -299,6 +298,11 @@
 }
 
 .stepper:not(.changed) .stepper-value-initial {
+  display: none;
+}
+
+.stepper.disabled .stepper-value-initial,
+.stepper.disabled .stepper-input {
   display: none;
 }
 

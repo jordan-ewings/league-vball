@@ -146,7 +146,7 @@ export function ButtonInline({ icon, text, onClick, className = '' }) {
 /* ---------------------------------- */
 // Stepper
 
-export function Stepper({ initial, value, setValue }) {
+export function Stepper({ initial, value, setValue, disabled }) {
 
   const [change, setChange] = useState(0);
 
@@ -163,7 +163,7 @@ export function Stepper({ initial, value, setValue }) {
   }, [initial]);
 
   return (
-    <div className={`stepper ${change != 0 ? 'changed' : ''}`}>
+    <div className={`stepper ${change != 0 ? 'changed' : ''} ${disabled ? 'disabled' : ''}`}>
       <div className="stepper-value-initial">{initial}</div>
       <div className={`stepper-value ${!change && value == 0 ? 'zero' : ''}`}>{value}</div>
       <div className="stepper-input">

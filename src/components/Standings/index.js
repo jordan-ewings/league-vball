@@ -167,6 +167,7 @@ function StatsMenu() {
 
 export function WeekStats() {
 
+  const { controls } = useAuth();
   const { leagueId, teams, weeks } = useLeague();
   const { weekId } = useParams();
   const navigate = useNavigate();
@@ -216,6 +217,7 @@ export function WeekStats() {
   }
 
   const renderSaveButton = () => {
+    if (!controls) return null;
     if (loading) return null;
     const disabled = Object.keys(updates).length == 0;
     const text = (!saving && !saved) ? 'Save' : null;
@@ -281,6 +283,7 @@ export function WeekStats() {
 function TeamDrinksItem({ team, week, setUpdates }) {
 
   const { leagueId } = useLeague();
+  const { controls } = useAuth();
   const [value, setValue] = useState(null);
   const weekDrinksPath = `stats/${leagueId}/${week.id}/${team.id}/drinks/count`;
   const drinks = useFirebase(weekDrinksPath);
@@ -317,6 +320,7 @@ function TeamDrinksItem({ team, week, setUpdates }) {
           initial={drinks}
           value={value}
           setValue={setValue}
+          disabled={!controls}
         />
       }
     />
