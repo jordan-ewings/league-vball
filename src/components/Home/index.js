@@ -2,7 +2,7 @@
 // Home
 
 import React, { useState, useEffect, useMemo, useCallback, memo, useRef, createRef } from 'react';
-import { useAuth, useLeague, useOptions } from '../contexts/SessionContext';
+import { useAuth, useLeague, useOptions } from '../../contexts/SessionContext';
 
 import {
   MainHeader,
@@ -13,7 +13,8 @@ import {
   Switch,
   Spinner,
   ButtonInline,
-} from './common';
+  TextInput,
+} from '../common';
 
 /* ---------------------------------- */
 
@@ -91,7 +92,8 @@ function AdminAccess() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
 
-  const handleSignIn = () => {
+  const handleSignIn = (e) => {
+    e.preventDefault();
     setErrorMsg(null);
     setLoading(true);
     login(passwordRef.current.value)
@@ -104,15 +106,21 @@ function AdminAccess() {
       });
   }
 
+  const renderFooter = () => {
+    return errorMsg && <span className="invalid-msg">{errorMsg}</span>;
+  }
+
   return (
     <div id="admin-container">
-      <ContCard title="ADMIN ACCESS" {...(errorMsg && { footer: (<span className="invalid-msg">{errorMsg}</span>) })} >
+      <ContCard title="ADMIN ACCESS" footer={renderFooter()}>
         {!admin && (
-          <MenuItem
-            className="login-form"
-            main={<input type="password" placeholder="Enter password..." ref={passwordRef} />}
-            trail={loading ? <Spinner /> : <ButtonInline icon="fa-regular fa-circle-right" onClick={handleSignIn} />}
-          />
+          <form onSubmit={handleSignIn}>
+            <MenuItem
+              className="login-form"
+              main={<TextInput type="password" placeholder="Enter password..." ref={passwordRef} />}
+              trail={loading ? <Spinner /> : <ButtonInline icon="fa-regular fa-circle-right" onClick={handleSignIn} />}
+            />
+          </form>
         )}
         {admin && (
           <MenuItem

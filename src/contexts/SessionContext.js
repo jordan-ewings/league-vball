@@ -156,22 +156,41 @@ function LeagueProvider({ children }) {
 }
 
 /* ---------------------------------- */
+// NavHiddenContext
+
+const NavHiddenContext = React.createContext();
+function NavHiddenProvider({ children }) {
+
+  const [navHidden, setNavHidden] = useState(false);
+
+  const value = useMemo(() => ({
+    navHidden,
+    setNavHidden
+  }), [navHidden, setNavHidden]);
+
+  return (<NavHiddenContext.Provider value={value}>{children}</NavHiddenContext.Provider>);
+}
+
+/* ---------------------------------- */
 // ContextProvider
 
 export const useAuth = () => useContext(AuthContext);
 export const useOptions = () => useContext(OptionsContext);
 export const useLeague = () => useContext(LeagueContext);
+export const useNavHidden = () => useContext(NavHiddenContext);
 
 export function ContextProvider({ children }) {
 
   return (
-    <AuthProvider>
-      <LeagueProvider>
-        <OptionsProvider>
-          {children}
-        </OptionsProvider>
-      </LeagueProvider>
-    </AuthProvider>
+    <NavHiddenProvider>
+      <AuthProvider>
+        <LeagueProvider>
+          <OptionsProvider>
+            {children}
+          </OptionsProvider>
+        </LeagueProvider>
+      </AuthProvider>
+    </NavHiddenProvider>
   );
 }
 

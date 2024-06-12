@@ -1,12 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useOptions, useLeague } from '../../contexts/SessionContext';
 import { useFirebase } from '../../hooks/useFirebase';
+
+import './style.css';
 
 /* ---------------------------------- */
 // stdChild
 
 function stdChild(arg) {
-  return typeof arg === 'string' ? <span>{arg}</span> : arg;
+  // return typeof arg === 'string' ? <span>{arg}</span> : arg;
+  // if no arg, return null
+  // if arg is a string, return a span element with the string as the text
+  // otherwise, return the arg
+  return arg ? (typeof arg === 'string' ? <span>{arg}</span> : arg) : null;
 }
 
 /* ---------------------------------- */
@@ -39,22 +45,13 @@ export function ContCard({ children,
       <div className="cont-card-footer">{stdChild(footer)}</div>
     </div>
   );
-
-}
-
-export function LoadingContCard({ title }) {
-  return (
-    <ContCard title={title} className="placeholder-glow">
-      <MenuItem main={<Spinner />} />
-    </ContCard>
-  );
 }
 
 /* ---------------------------------- */
 // MenuItem
 
 export function MenuItem({
-  className,
+  className = '',
   icon,
   main,
   info,
@@ -130,18 +127,69 @@ export function Switch({ checked, onChange }) {
 
 export function Spinner() {
   return (
-    <div className="spinner-border spinner-border-sm"></div>
+    <div className="spinner spinner-border spinner-border-sm"></div>
   );
 }
 
 /* ---------------------------------- */
 // ButtonInline
 
-export function ButtonInline({ icon, text, onClick }) {
+export function ButtonInline({ icon, text, onClick, className = '' }) {
   return (
-    <div role="button" onClick={onClick}>
+    <div className={`button-inline ${className}`} role="button" onClick={onClick}>
       {icon && <i className={icon}></i>}
       <span>{text}</span>
     </div>
   );
 }
+
+/* ---------------------------------- */
+// Stepper
+
+export function Stepper({ initial, value, setValue }) {
+
+  const [change, setChange] = useState(0);
+
+  const handleClick = (diff) => {
+    const newValue = value + diff;
+    if (newValue < 0) return;
+    setValue(newValue);
+    setChange(newValue - initial);
+  }
+
+  // if initial changes, reset value and change
+  useEffect(() => {
+    setChange(0);
+  }, [initial]);
+
+  return (
+    <div className={`stepper ${change != 0 ? 'changed' : ''}`}>
+      <div className="stepper-value-initial">{initial}</div>
+      <div className={`stepper-value ${!change && value == 0 ? 'zero' : ''}`}>{value}</div>
+      <div className="stepper-input">
+        <div className="stepper-btn-group">
+          <div role="button" className="stepper-btn stepper-down" onClick={() => handleClick(-1)}>
+            <i className="bi bi-dash-lg"></i>
+          </div>
+          <div className="separator"></div>
+          <div role="button" className="stepper-btn stepper-up" onClick={() => handleClick(1)}>
+            <i className="bi bi-plus-lg"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------- */
+// TextInput
+// e.g. <TextInput type="password" placeholder="Enter password..." ref={ref} />
+// e.g. <TextInput type="text" placeholder="Enter name..." onChange={handleChange} value={name} />
+// (variety of props that may or may not be used)
+// must allow other components to pass in a ref (but not required)
+
+export const TextInput = React.forwardRef(({ type, placeholder, onChange }, ref) => {
+  return (
+    <input className="text-input" type={type} placeholder={placeholder} onChange={onChange} ref={ref} />
+  );
+});

@@ -1,140 +1,19 @@
-/* ---------------------------------- */
-// Schedule
-
 import React, { useState, useEffect, useMemo, useCallback, memo, useRef, createRef } from 'react';
-import { useAuth, useLeague, useOptions } from '../contexts/SessionContext';
-import { useFirebase } from '../hooks/useFirebase';
+import { useAuth, useLeague, useOptions } from '../../contexts/SessionContext';
+import { useFirebase } from '../../hooks/useFirebase';
 import { get, child, ref, onValue, off, set, update, runTransaction } from "firebase/database";
 import {
   Collapse,
-  Placeholder,
 } from 'react-bootstrap';
 
 import {
-  MainHeader,
-  ContCard,
-  MenuItem,
-  RadioMenuItem,
   TeamLabel,
-  Spinner,
-  Switch,
-  ButtonInline,
-} from './common';
-import { db } from '../firebase';
+} from '../common';
+import { db } from '../../firebase';
 
 /* ---------------------------------- */
 
-export default function Schedule() {
-
-  const { loading, weeks } = useLeague();
-  const [activeWeek, setActiveWeek] = useState(null);
-
-  useEffect(() => {
-    if (loading) return;
-    const finalWeek = Object.values(weeks).pop();
-    const nextWeek = Object.values(weeks).find(week => new Date(week.gameday) > new Date());
-    setActiveWeek(nextWeek ? nextWeek.id : finalWeek.id);
-  }, [loading, weeks]);
-
-  return (
-    <div className="section">
-      <MainHeader>
-        {!loading && <WeekButtons weeks={weeks} activeWeek={activeWeek} setActiveWeek={setActiveWeek} />}
-      </MainHeader>
-      <div className="main-body">
-        {!loading && activeWeek && <WeekGames weekId={activeWeek} />}
-      </div>
-    </div>
-  );
-};
-
-/* ---------------------------------- */
-// WeekButtons
-
-function WeekButtons({ weeks, activeWeek, setActiveWeek }) {
-
-  const formatDate = (str) => new Date(str).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-
-  const buttonsRef = useRef({});
-  useEffect(() => {
-    const activeButton = buttonsRef.current[activeWeek];
-    if (activeButton) {
-      activeButton.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-    }
-  }, [activeWeek]);
-
-  return (
-    <div className="btn-group d-flex flex-nowrap overflow-x-scroll" role="group">
-      {Object.entries(weeks).map(([key, week]) => (
-        <button
-          key={key}
-          ref={el => buttonsRef.current[key] = el}
-          className={`btn week-filter-btn d-flex flex-column justify-content-center align-items-center text-nowrap ${key == activeWeek ? 'active' : ''}`}
-          type="button"
-          onClick={() => setActiveWeek(key)}
-        >
-          <span className="week-btn-label">{week.label}</span>
-          <span className="week-btn-date">{formatDate(week.gameday)}</span>
-        </button>
-      ))}
-    </div>
-  );
-}
-
-/* ---------------------------------- */
-// WeekGames
-
-function WeekGames({ weekId }) {
-
-  const { games, teams } = useLeague();
-
-  const gamesForWeek = useMemo(() => {
-    const weekGames = games[weekId];
-    if (!weekGames) return;
-    return Object.values(weekGames).map((game) => {
-      Object.keys(game.teams).forEach((teamId) => {
-        const team = teams[teamId];
-        game.teams[teamId] = {
-          id: teamId,
-          nbr: team.nbr,
-          name: team.name,
-        };
-      });
-      return game;
-    });
-  }, [games, teams, weekId]);
-
-  const gamesByTime = useMemo(() => {
-    if (!gamesForWeek) return;
-    return gamesForWeek.reduce((acc, game) => {
-      if (!acc[game.time]) {
-        acc[game.time] = [];
-      }
-      acc[game.time].push(game);
-      return acc;
-    }, {});
-  }, [gamesForWeek]);
-
-  return (
-    <div className="week-games">
-      {Object.entries(gamesByTime).map(([time, games]) => (
-        <ContCard key={time} className="game-group">
-          {games.map((game, index) => (
-            <React.Fragment key={game.id}>
-              <GameItem game={game} />
-              {index < games.length - 1 && <div className="game-separator"></div>}
-            </React.Fragment>
-          ))}
-        </ContCard>
-      ))}
-    </div>
-  );
-}
-
-/* ---------------------------------- */
-// GameItem
-
-function GameItem({ game }) {
+export default function GameItem({ game }) {
 
   const { leagueId } = useLeague();
   const { controls } = useAuth();
@@ -218,14 +97,12 @@ function GameItem({ game }) {
   }
 
   // save button click - actual version
-  // need to update matches along with team records
   const handleSave = async () => {
 
     setPending(true);
     const updates = {};
     updates[matchesRefPath] = formMatches;
 
-    // if all games in matches are PRE or CNCL and all games in formMatches are PRE or CNCL, then no need to update team records
     let updateRecords = false;
     matchIds.forEach(matchId => {
       const match = matches[matchId];
@@ -282,7 +159,6 @@ function GameItem({ game }) {
   }
 
   // new handle save (more efficient)
-  // utilize runTransaction to update records instead of getting all games and recalculating
   const handleSave2 = async () => {
 
     setPending(true);
@@ -343,9 +219,6 @@ function GameItem({ game }) {
   /* ---------------------------------- */
   // return
 
-  // if (!matches) return null;
-
-  // console.log('Render');
   return (
     <div className={`game-item ${form ? 'game-item-form' : ''}`}>
       <div className="row g-0">
@@ -394,5 +267,3 @@ function GameItem({ game }) {
     </div>
   )
 }
-
-/* ---------------------------------- */

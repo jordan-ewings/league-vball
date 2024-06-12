@@ -8,7 +8,7 @@ import { ContextProvider } from './contexts/SessionContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './components/Home';
-import Standings from './components/Standings';
+import Standings, { WeekStats } from './components/Standings';
 import Schedule from './components/Schedule';
 
 /* ---------------------------------- */
@@ -24,6 +24,8 @@ export default function App() {
             <Route path="/" exact element={<Home />} />
             <Route path="/standings" element={<Standings />} />
             <Route path="/schedule" element={<Schedule />} />
+
+            <Route path="/stats/:weekId" element={<WeekStats />} />
           </Routes>
         </Container>
         <Footer />
