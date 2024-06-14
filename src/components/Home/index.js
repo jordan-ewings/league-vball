@@ -37,17 +37,18 @@ export default function Home() {
 
 function LeagueSelect() {
 
-  const [didMount, setDidMount] = useState(false);
-  const { loading, leagues, leagueId, setLeagueId } = useLeague();
+  const { leagues, leagueId, setLeagueId } = useLeague();
 
   const options = useMemo(() => {
-    return Object.values(leagues).sort((a, b) => {
-      if (a.season != b.season) return a.season - b.season;
-      if (a.session != b.session) return a.session - b.session;
-      if (a.league == b.league) return 0;
-      let days = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
-      return days.indexOf(a.league) - days.indexOf(b.league);
-    });
+    if (leagues) {
+      return Object.values(leagues).sort((a, b) => {
+        if (a.season != b.season) return a.season - b.season;
+        if (a.session != b.session) return a.session - b.session;
+        if (a.league == b.league) return 0;
+        let days = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
+        return days.indexOf(a.league) - days.indexOf(b.league);
+      });
+    }
   }, [leagues]);
 
   const createTitle = (title) => {
@@ -61,13 +62,11 @@ function LeagueSelect() {
     );
   }
 
-  useEffect(() => { if (!loading) setDidMount(true); }, [loading]);
-
   return (
     <div id="league-select-container">
-      <ContCard title="SELECT LEAGUE" loading={!didMount}>
+      <ContCard title="SELECT LEAGUE" loading={!options}>
         <div className="radio-menu">
-          {options.map(o => (
+          {options && options.map(o => (
             <RadioMenuItem
               key={o.id}
               title={createTitle(o.title)}
@@ -123,17 +122,17 @@ function AdminAccess() {
           </form>
         )}
         {admin && (
-          <MenuItem
-            className="logged-in-form"
-            main="Enable Controls"
-            trail={<Switch checked={controls} onChange={() => setControls(!controls)} />}
-          />
-        )}
-        {admin && (
-          <MenuItem
-            className="logout-form"
-            main={<ButtonInline text="Logout" onClick={logout} />}
-          />
+          <>
+            <MenuItem
+              className="logged-in-form"
+              main="Enable Controls"
+              trail={<Switch checked={controls} onChange={() => setControls(!controls)} />}
+            />
+            <MenuItem
+              className="logout-form"
+              main={<ButtonInline text="Logout" onClick={logout} />}
+            />
+          </>
         )}
       </ContCard>
     </div>
@@ -145,24 +144,24 @@ function AdminAccess() {
 
 function TeamSelect() {
 
-  const [didMount, setDidMount] = useState(false);
   const { favTeam, setFavTeam } = useOptions();
-  const { loading, teams } = useLeague();
-  const [sortedTeams, setSortedTeams] = useState([]);
+  const { teams } = useLeague();
 
-  useEffect(() => {
-    const options = Object.values(teams);
-    const sorted = [...options].sort((a, b) => (a.name === favTeam ? -1 : b.name === favTeam ? 1 : 0));
-    setSortedTeams(sorted);
-  }, [favTeam, teams]);
-
-  useEffect(() => { if (!loading) setDidMount(true); }, [loading]);
+  const options = useMemo(() => {
+    if (teams) {
+      return Object.values(teams).sort((a, b) => {
+        if (a.name === favTeam) return -1;
+        if (b.name === favTeam) return 1;
+        return 0;
+      });
+    }
+  }, [teams, favTeam]);
 
   return (
     <div id="team-select-container">
-      <ContCard title="MY TEAM" loading={!didMount}>
+      <ContCard title="MY TEAM" loading={!options}>
         <div className="radio-menu">
-          {sortedTeams.map(team => {
+          {options && options.map(team => {
             const isFav = team.name == favTeam;
             return (
               <RadioMenuItem
@@ -180,3 +179,4 @@ function TeamSelect() {
 }
 
 /* ---------------------------------- */
+// helpers

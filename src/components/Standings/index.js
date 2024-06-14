@@ -24,17 +24,15 @@ import {
 } from '../common';
 import { db } from '../../firebase';
 
+import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import './style.css';
 
 /* ---------------------------------- */
 
 export default function Standings() {
 
-
-
   return (
     <div className="section">
-      <MainHeader />
       <div className="main-body">
         <Leaderboard />
         <StatsMenu />
@@ -47,35 +45,13 @@ export default function Standings() {
 
 function Leaderboard() {
 
-  const [loading, setLoading] = useState(true);
   const { leagueId } = useLeague();
-  const [procTeams, setProcTeams] = useState([]);
   const teams = useFirebase('teams/' + leagueId);
-
-  useEffect(() => {
-    if (!teams) return;
-    const teamsArr = Object.values(teams).map(team => {
-      team.stats.games.winPct = team.stats.games.winPct || 0;
-      return team;
-    });
-
-    teamsArr.sort((a, b) => {
-      let aGS = a.stats.games;
-      let bGS = b.stats.games;
-      if (aGS.winPct != bGS.winPct) return bGS.winPct - aGS.winPct;
-      if (aGS.wins != bGS.wins) return bGS.wins - aGS.wins;
-      if (aGS.losses != bGS.losses) return aGS.losses - bGS.losses;
-      if (a.id != b.id) return a.id - b.id;
-      return 0;
-    });
-
-    setProcTeams(teamsArr);
-    setLoading(false);
-  }, [teams]);
+  const procTeams = useMemo(() => sortTeams(teams), [teams]);
 
   return (
     <div id="leaderboard-container">
-      <ContCard title="LEADERBOARD" loading={loading}>
+      <ContCard title="LEADERBOARD" loading={!procTeams}>
         <div className="table-responsive">
           <table className="leaderboard-table table table-borderless align-middle text-nowrap m-0">
             <thead>
@@ -88,8 +64,14 @@ function Leaderboard() {
               </tr>
             </thead>
             <tbody>
-              {procTeams.map((team, i) => (
-                <LeaderboardItem key={team.id} team={team} />
+              {procTeams && procTeams.map((team, i) => (
+                <tr key={team.id} className="leaderboard-item">
+                  <td className="team"><TeamLabel team={team} /></td>
+                  <td className="wins">{team.stats.games.wins}</td>
+                  <td className="losses">{team.stats.games.losses}</td>
+                  <td className="winPct">{team.stats.games.winPct}</td>
+                  <td className="drinks">{team.stats.drinks.count}</td>
+                </tr>
               ))}
             </tbody>
           </table>
@@ -99,26 +81,28 @@ function Leaderboard() {
   );
 }
 
-/* ---------------------------------- */
-// LeaderboardItem
+function sortTeams(teams) {
+  if (!teams) return;
+  const data = Object.values(teams).map(team => {
+    team.stats.games.winPct = parseFloat(team.stats.games.winPct) || 0;
+    return team;
+  });
 
-function LeaderboardItem({ team }) {
+  data.sort((a, b) => {
+    const ad = a.stats.games;
+    const bd = b.stats.games;
+    if (bd.winPct != ad.winPct) return bd.winPct - ad.winPct;
+    if (bd.wins != ad.wins) return bd.wins - ad.wins;
+    if (ad.losses != bd.losses) return ad.losses - bd.losses;
+    return a.id - b.id;
+  });
 
-  const formatPct = (val) => {
-    return val.toFixed(3).replace(/^0+/, '');
-  }
-
-  return (
-    <tr className="leaderboard-item">
-      <td className="team">
-        <TeamLabel team={team} />
-      </td>
-      <td className="wins">{team.stats.games.wins}</td>
-      <td className="losses">{team.stats.games.losses}</td>
-      <td className="winPct">{formatPct(team.stats.games.winPct)}</td>
-      <td className="drinks">{team.stats.drinks.count}</td>
-    </tr>
-  );
+  return data.map(team => {
+    const winPct = team.stats.games.winPct;
+    const fmtPct = winPct.toFixed(3).replace(/^0+/, '');
+    team.stats.games.winPct = fmtPct;
+    return team;
+  });
 }
 
 /* ---------------------------------- */
@@ -128,33 +112,18 @@ function StatsMenu() {
 
   const navigate = useNavigate();
   const { weeks } = useLeague();
-  const [loading, setLoading] = useState(true);
-  const [weeksArr, setWeeksArr] = useState([]);
-
-  useEffect(() => {
-    if (Object.keys(weeks).length == 0) return;
-    const arr = Object.values(weeks).map(week => {
-      return {
-        id: week.id,
-        title: week.label,
-        date: new Date(week.gameday).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
-      }
-    });
-
-    setWeeksArr(arr);
-    setLoading(false);
-  }, [weeks]);
+  const options = useMemo(() => (weeks ? Object.values(weeks) : null), [weeks]);
 
   return (
     <div id="stats-container">
-      <ContCard title="STATS" loading={loading}>
-        {weeksArr.map(week => (
+      <ContCard title="STATS" loading={!options}>
+        {options && options.map(week => (
           <MenuItem
             key={week.id}
-            main={week.title}
-            trail={week.date}
+            main={week.label}
+            trail={new Date(week.gameday).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
             nav={true}
-            onClick={() => navigate('/stats/' + week.id)}
+            onClick={() => navigate(`/stats/${week.id}`)}
           />
         ))}
       </ContCard>
@@ -167,65 +136,61 @@ function StatsMenu() {
 
 export function WeekStats() {
 
-  const { controls } = useAuth();
-  const { leagueId, teams, weeks } = useLeague();
   const { weekId } = useParams();
-  const navigate = useNavigate();
-  const { setNavHidden } = useNavHidden();
+  const { leagueId, teams, weeks } = useLeague();
+  const { controls } = useAuth();
 
-  const week = weeks[weekId];
   const [updates, setUpdates] = useState({});
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [loading, setLoading] = useState(true);
 
+  const navigate = useNavigate();
+  const { setNavHidden } = useNavHidden();
   useEffect(() => {
-    if (!week) return;
-    setLoading(false);
     setNavHidden(true);
-  }, [week]);
+    return () => setNavHidden(false);
+  }, []);
 
-  useEffect(() => {
-    if (loading) return;
-    console.log('updates:', updates);
-  }, [updates]);
+  /* ---------------------------------- */
+  // handleSave
 
   const handleSave = () => {
-    if (Object.keys(updates).length == 0) return;
-    if (saving || saved) return;
+    const changes = Object.values(updates).filter(v => v != 0);
+    if (changes.length == 0) return;
+    if (saving) return;
 
     setSaving(true);
     const updatesObj = {};
     Object.keys(updates).forEach(teamId => {
       const change = updates[teamId];
+      if (change == 0) return;
       updatesObj[`stats/${leagueId}/${weekId}/${teamId}/drinks/count`] = increment(change);
       updatesObj[`teams/${leagueId}/${teamId}/stats/drinks/count`] = increment(change);
     });
 
+    console.log('Posting:', updatesObj);
     update(ref(db), updatesObj)
       .then(() => {
-        setSaving(false);
         setSaved(true);
         setTimeout(() => {
+          setSaving(false);
           setSaved(false);
-          setUpdates({});
-        }, 1000);
+        }, 2000);
       })
       .catch((error) => {
         console.error('Error updating drinks:', error);
       });
   }
 
+  /* ---------------------------------- */
+  // MainHeader render
+
   const renderSaveButton = () => {
     if (!controls) return null;
-    if (loading) return null;
-    const disabled = Object.keys(updates).length == 0;
-    const text = (!saving && !saved) ? 'Save' : null;
-    const icon = (saving)
-      ? 'fa-solid fa-spinner fa-spin'
-      : (saved)
-        ? 'fa-solid fa-check'
-        : null;
+    const isPending = Object.values(updates).filter(v => v != 0).length > 0;
+    const disabled = saving ? false : !isPending;
+    const text = (!saving) ? 'Save' : null;
+    const icon = (!saving) ? null : (!saved) ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-check';
 
     return (
       <ButtonInline
@@ -238,36 +203,42 @@ export function WeekStats() {
   }
 
   const renderBackButton = () => {
-    if (loading) return null;
     return (
       <ButtonInline
         className="btn-back"
         icon="fa-solid fa-chevron-left"
         text="Back"
-        onClick={() => {
-          navigate('/standings');
-          setNavHidden(false);
-        }}
+        onClick={() => navigate('/standings')}
       />
     );
   }
 
-  return !loading && (
+  const renderTitle = () => {
+    const title = weeks && weeks[weekId] ? weeks[weekId].label : 'Week';
+    return (
+      <div className="main-header-title">
+        <span>{title}</span>
+      </div>
+    )
+  }
+
+  /* ---------------------------------- */
+  // render
+
+  return (
     <div id="week-stats-container">
       <MainHeader>
         {renderBackButton()}
-        <div className="main-header-title">
-          <span>{week.label}</span>
-        </div>
+        {renderTitle()}
         {renderSaveButton()}
       </MainHeader>
       <div className="main-body">
-        <ContCard title="TEAM DRINKS">
-          {Object.values(teams).map(team => (
+        <ContCard title="TEAM DRINKS" loading={!teams}>
+          {teams && Object.values(teams).map(team => (
             <TeamDrinksItem
               key={team.id}
               team={team}
-              week={week}
+              dataPath={`stats/${leagueId}/${weekId}/${team.id}/drinks/count`}
               setUpdates={setUpdates}
             />
           ))}
@@ -280,52 +251,44 @@ export function WeekStats() {
 
 /* ---------------------------------- */
 
-function TeamDrinksItem({ team, week, setUpdates }) {
+// function TeamDrinksItem({ team, dataPath, setUpdates }) {
+const TeamDrinksItem = memo(function TeamDrinksItem({ team, dataPath, setUpdates }) {
 
-  const { leagueId } = useLeague();
   const { controls } = useAuth();
-  const [value, setValue] = useState(null);
-  const weekDrinksPath = `stats/${leagueId}/${week.id}/${team.id}/drinks/count`;
-  const drinks = useFirebase(weekDrinksPath);
+  const drinks = useFirebase(dataPath);
 
   useEffect(() => {
-    if (drinks == null) return;
-    setValue(drinks);
-  }, [drinks]);
+    if (drinks === null) return;
+    setUpdates((prev) => {
+      const newUpdates = { ...prev };
+      newUpdates[team.id] = 0;
+      return newUpdates;
+    });
+  }, [drinks, team.id]);
 
-  useEffect(() => {
-    if (value == null) return;
-    if (value == drinks) {
-      setUpdates((prev) => {
-        const newUpdates = { ...prev };
-        delete newUpdates[team.id];
-        return newUpdates;
-      });
-    } else {
-      setUpdates((prev) => {
-        const newUpdates = { ...prev };
-        newUpdates[team.id] = value - drinks;
-        return newUpdates;
-      });
-    }
-  }, [value]);
+  const handleStepperChange = (newValue) => {
+    setUpdates((prev) => {
+      const newUpdates = { ...prev };
+      newUpdates[team.id] = newValue - drinks;
+      return newUpdates;
+    });
+  }
 
+  if (drinks === null) return;
 
+  console.log(`TeamDrinksItem: ${drinks !== null ? 'loaded' : 'loading'}`);
   return (
     <MenuItem
       className="team-drinks-item"
       main={<TeamLabel team={team} />}
-      trail={
-        <Stepper
-          initial={drinks}
-          value={value}
-          setValue={setValue}
-          disabled={!controls}
-        />
+      trail={controls ?
+        <Stepper initialValue={drinks} onChange={handleStepperChange} /> :
+        <span className={`drinks-value ${drinks == 0 ? 'zero' : ''}`}>{drinks}</span>
       }
     />
   );
-}
+});
+// }
 
 
 

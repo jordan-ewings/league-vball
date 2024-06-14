@@ -5,6 +5,7 @@ import React, { useContext, useReducer, useState, useEffect, useMemo, useCallbac
 import { get, child, ref, onValue, set } from "firebase/database";
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
 import { auth, db } from "../firebase";
+import { resetFirebaseStore } from "../hooks/useFirebase";
 
 /* ---------------------------------- */
 // local storage functions
@@ -91,55 +92,66 @@ const LeagueContext = React.createContext();
 function LeagueProvider({ children }) {
 
   const [loading, setLoading] = useState(true);
-  const [leagues, setLeagues] = useState({});
-  const [leagueId, setLeagueIdState] = useState(Storage.get('leagueId'));
-  const [league, setLeague] = useState({});
-  const [teams, setTeams] = useState({});
-  const [weeks, setWeeks] = useState({});
-  const [games, setGames] = useState({});
+  const [leagues, setLeagues] = useState(null);
+  const [leagueId, setLeagueIdState] = useState(null);
+  const [league, setLeague] = useState(null);
+  const [teams, setTeams] = useState(null);
+  const [weeks, setWeeks] = useState(null);
+  const [currentWeek, setCurrentWeek] = useState(null);
+  const [games, setGames] = useState(null);
 
   // fetch leagues only once and confirm valid leagueId
   useEffect(() => {
     const init = async () => {
       const dbLeagues = await get(child(ref(db), 'leagues')).then(s => s.val());
+      const storedLeagueId = Storage.get('leagueId');
+      const validLeagueId = storedLeagueId && dbLeagues[storedLeagueId] ? storedLeagueId : Object.keys(dbLeagues)[0];
+
       setLeagues(dbLeagues);
-      console.log('LEAGUES:', dbLeagues);
-    };
+      setLeague(dbLeagues[validLeagueId])
+      setLeagueIdState(validLeagueId);
+    }
 
     init();
   }, []);
 
   // fetch league data
   useEffect(() => {
+
     const init = async () => {
+      if (!leagueId) return;
 
-      setLeague(leagues[leagueId]);
-      setTeams(await get(child(ref(db), 'teams/' + leagueId)).then(s => s.val()));
-      setGames(await get(child(ref(db), 'games/' + leagueId)).then(s => s.val()));
-      setWeeks(await get(child(ref(db), 'weeks/' + leagueId)).then(s => s.val()));
+      resetFirebaseStore();
+      const newTeams = await get(child(ref(db), `teams/${leagueId}`)).then(s => s.val());
+      const newGames = await get(child(ref(db), `games/${leagueId}`)).then(s => s.val());
+      const newWeeks = await get(child(ref(db), `weeks/${leagueId}`)).then(s => s.val());
+      const finalWeek = Object.values(newWeeks).pop();
+      const nextWeek = Object.values(newWeeks).find(week => {
+        const todayDate = new Date().setHours(0, 0, 0, 0);
+        const weekDate = new Date(week.gameday).setHours(0, 0, 0, 0);
+        return weekDate > todayDate;
+      });
+      const newCurrentWeek = nextWeek ? nextWeek.id : finalWeek.id;
 
+
+      setTeams(newTeams);
+      setGames(newGames);
+      setWeeks(newWeeks);
+      setCurrentWeek(newCurrentWeek);
       setLoading(false);
-    };
-
-    // only fetch league data if leagueId is valid, which requires leagues to be fetched first
-    const leaguesFetched = Object.keys(leagues).length > 0;
-    if (leaguesFetched) {
-      if (leagueId && leagues[leagueId]) {
-        init();
-      } else {
-        setLeagueIdState(Object.keys(leagues)[0]);
-      }
     }
 
-  }, [leagueId, leagues]);
+    init();
+  }, [leagueId]);
 
   const setLeagueId = useCallback((newLeagueId) => {
     if (newLeagueId !== leagueId) {
       setLoading(true);
       Storage.set('leagueId', newLeagueId);
+      setLeague(leagues[newLeagueId]);
       setLeagueIdState(newLeagueId);
     }
-  }, [leagueId]);
+  }, [leagueId, leagues]);
 
   const value = useMemo(() => ({
     loading,
@@ -148,9 +160,10 @@ function LeagueProvider({ children }) {
     league,
     teams,
     weeks,
+    currentWeek,
     games,
     setLeagueId
-  }), [loading, leagues, leagueId, league, teams, weeks, games, setLeagueId]);
+  }), [loading, leagues, leagueId, league, teams, weeks, currentWeek, games, setLeagueId]);
 
   return (<LeagueContext.Provider value={value}>{children}</LeagueContext.Provider>);
 }

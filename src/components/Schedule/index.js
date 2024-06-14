@@ -30,23 +30,16 @@ import './style.css';
 
 export default function Schedule() {
 
-  const { loading, weeks } = useLeague();
-  const [activeWeek, setActiveWeek] = useState(null);
-
-  useEffect(() => {
-    if (loading) return;
-    const finalWeek = Object.values(weeks).pop();
-    const nextWeek = Object.values(weeks).find(week => new Date(week.gameday) > new Date());
-    setActiveWeek(nextWeek ? nextWeek.id : finalWeek.id);
-  }, [loading, weeks]);
+  const { weeks, currentWeek } = useLeague();
+  const [activeWeek, setActiveWeek] = useState(currentWeek);
 
   return (
     <div className="section">
       <MainHeader>
-        {!loading && <WeekButtons weeks={weeks} activeWeek={activeWeek} setActiveWeek={setActiveWeek} />}
+        <WeekButtons weeks={weeks} activeWeek={activeWeek} setActiveWeek={setActiveWeek} />
       </MainHeader>
       <div className="main-body">
-        {!loading && activeWeek && <WeekGames weekId={activeWeek} />}
+        <WeekGames weekId={activeWeek} />
       </div>
     </div>
   );
@@ -93,9 +86,7 @@ function WeekGames({ weekId }) {
   const { games, teams } = useLeague();
 
   const gamesForWeek = useMemo(() => {
-    const weekGames = games[weekId];
-    if (!weekGames) return;
-    return Object.values(weekGames).map((game) => {
+    return Object.values(games[weekId]).map((game) => {
       Object.keys(game.teams).forEach((teamId) => {
         const team = teams[teamId];
         game.teams[teamId] = {
@@ -109,7 +100,6 @@ function WeekGames({ weekId }) {
   }, [games, teams, weekId]);
 
   const gamesByTime = useMemo(() => {
-    if (!gamesForWeek) return;
     return gamesForWeek.reduce((acc, game) => {
       if (!acc[game.time]) {
         acc[game.time] = [];
