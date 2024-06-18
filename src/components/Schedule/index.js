@@ -3,9 +3,9 @@
 
 import React, { useState, useEffect, useMemo, useCallback, memo, useRef, createRef } from 'react';
 import { useAuth, useLeague, useOptions } from '../../contexts/SessionContext';
-import { useFirebase } from '../../hooks/useFirebase';
+import { useFirebase, useCache } from '../../firebase/useFirebase';
 import { get, child, ref, onValue, off, set, update, runTransaction } from "firebase/database";
-import { db } from '../../firebase';
+import { db } from '../../firebase/firebase';
 
 import {
   Collapse,
@@ -30,13 +30,17 @@ import './style.css';
 
 export default function Schedule() {
 
-  const { weeks, currentWeek } = useLeague();
+  const currentWeek = useCurrentWeek();
   const [activeWeek, setActiveWeek] = useState(currentWeek);
 
-  return (
+  useEffect(() => {
+    setActiveWeek(currentWeek);
+  }, [currentWeek]);
+
+  return activeWeek && (
     <div className="section">
       <MainHeader>
-        <WeekButtons weeks={weeks} activeWeek={activeWeek} setActiveWeek={setActiveWeek} />
+        <WeekButtons activeWeek={activeWeek} setActiveWeek={setActiveWeek} />
       </MainHeader>
       <div className="main-body">
         <WeekGames weekId={activeWeek} />
@@ -48,11 +52,11 @@ export default function Schedule() {
 /* ---------------------------------- */
 // WeekButtons
 
-function WeekButtons({ weeks, activeWeek, setActiveWeek }) {
+function WeekButtons({ activeWeek, setActiveWeek }) {
 
-  const formatDate = (str) => new Date(str).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-
+  const weeks = useCache('weeks');
   const buttonsRef = useRef({});
+
   useEffect(() => {
     const activeButton = buttonsRef.current[activeWeek];
     if (activeButton) {
@@ -60,9 +64,11 @@ function WeekButtons({ weeks, activeWeek, setActiveWeek }) {
     }
   }, [activeWeek]);
 
+  const formatDate = (str) => new Date(str).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
   return (
     <div className="week-filter-btn-group btn-group" role="group">
-      {Object.entries(weeks).map(([key, week]) => (
+      {weeks && Object.entries(weeks).map(([key, week]) => (
         <button
           key={key}
           ref={el => buttonsRef.current[key] = el}
@@ -83,35 +89,11 @@ function WeekButtons({ weeks, activeWeek, setActiveWeek }) {
 
 function WeekGames({ weekId }) {
 
-  const { games, teams } = useLeague();
-
-  const gamesForWeek = useMemo(() => {
-    return Object.values(games[weekId]).map((game) => {
-      Object.keys(game.teams).forEach((teamId) => {
-        const team = teams[teamId];
-        game.teams[teamId] = {
-          id: teamId,
-          nbr: team.nbr,
-          name: team.name,
-        };
-      });
-      return game;
-    });
-  }, [games, teams, weekId]);
-
-  const gamesByTime = useMemo(() => {
-    return gamesForWeek.reduce((acc, game) => {
-      if (!acc[game.time]) {
-        acc[game.time] = [];
-      }
-      acc[game.time].push(game);
-      return acc;
-    }, {});
-  }, [gamesForWeek]);
+  const gamesByTime = useWeekGamesData(weekId);
 
   return (
     <div className="week-games">
-      {Object.entries(gamesByTime).map(([time, games]) => (
+      {gamesByTime && Object.entries(gamesByTime).map(([time, games]) => (
         <ContCard key={time} className="game-group">
           {games.map((game, index) => (
             <React.Fragment key={game.id}>
@@ -126,3 +108,45 @@ function WeekGames({ weekId }) {
 }
 
 /* ---------------------------------- */
+
+function useCurrentWeek() {
+
+  const weeks = useCache('weeks');
+  if (!weeks) return null;
+
+  const finalWeek = Object.values(weeks).pop();
+  const nextWeek = Object.values(weeks).find(week => {
+    const today = new Date().setHours(0, 0, 0, 0);
+    const gameday = new Date(week.gameday).setHours(0, 0, 0, 0);
+    return gameday > today;
+  });
+
+  return nextWeek ? nextWeek.id : finalWeek.id;
+}
+
+/* ---------------------------------- */
+
+function useWeekGamesData(weekId) {
+
+  const games = useCache('games');
+  const teams = useCache('teams');
+  if (!games || !teams) return null;
+
+  const gamesForWeek = Object.values(games[weekId]).map(game => {
+    Object.keys(game.teams).forEach(teamId => {
+      const team = teams[teamId];
+      game.teams[teamId] = {
+        id: team.id,
+        nbr: team.nbr,
+        name: team.name,
+      };
+    });
+    return game;
+  });
+
+  const timeSlots = gamesForWeek.map(g => g.time).filter((v, i, a) => a.indexOf(v) === i);
+  return timeSlots.reduce((acc, time) => {
+    acc[time] = gamesForWeek.filter(g => g.time === time);
+    return acc;
+  }, {});
+}

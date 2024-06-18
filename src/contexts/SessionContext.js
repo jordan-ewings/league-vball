@@ -4,8 +4,8 @@
 import React, { useContext, useReducer, useState, useEffect, useMemo, useCallback, useSyncExternalStore } from "react";
 import { get, child, ref, onValue, set } from "firebase/database";
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
-import { auth, db } from "../firebase";
-import { resetFirebaseStore } from "../hooks/useFirebase";
+import { auth, db } from "../firebase/firebase";
+import { initFirebaseStore } from "../firebase/useFirebase";
 
 /* ---------------------------------- */
 // local storage functions
@@ -91,82 +91,152 @@ function OptionsProvider({ children }) {
 const LeagueContext = React.createContext();
 function LeagueProvider({ children }) {
 
-  const [loading, setLoading] = useState(true);
   const [leagues, setLeagues] = useState(null);
   const [leagueId, setLeagueIdState] = useState(null);
-  const [league, setLeague] = useState(null);
-  const [teams, setTeams] = useState(null);
-  const [weeks, setWeeks] = useState(null);
-  const [currentWeek, setCurrentWeek] = useState(null);
-  const [games, setGames] = useState(null);
 
-  // fetch leagues only once and confirm valid leagueId
   useEffect(() => {
     const init = async () => {
-      const dbLeagues = await get(child(ref(db), 'leagues')).then(s => s.val());
-      const storedLeagueId = Storage.get('leagueId');
-      const validLeagueId = storedLeagueId && dbLeagues[storedLeagueId] ? storedLeagueId : Object.keys(dbLeagues)[0];
+      const leaguesDB = await get(child(ref(db), 'leagues')).then(s => s.val());
+      const newLeagues = Object.values(leaguesDB);
 
-      setLeagues(dbLeagues);
-      setLeague(dbLeagues[validLeagueId])
-      setLeagueIdState(validLeagueId);
+      const storedId = Storage.get('leagueId');
+      const defaultId = Object.keys(leaguesDB)[0];
+      const newLeagueId = storedId && leaguesDB[storedId] ? storedId : defaultId;
+
+      setLeagues(newLeagues);
+      setLeagueIdState(newLeagueId);
     }
 
     init();
   }, []);
 
-  // fetch league data
-  useEffect(() => {
-
-    const init = async () => {
-      if (!leagueId) return;
-
-      resetFirebaseStore();
-      const newTeams = await get(child(ref(db), `teams/${leagueId}`)).then(s => s.val());
-      const newGames = await get(child(ref(db), `games/${leagueId}`)).then(s => s.val());
-      const newWeeks = await get(child(ref(db), `weeks/${leagueId}`)).then(s => s.val());
-      const finalWeek = Object.values(newWeeks).pop();
-      const nextWeek = Object.values(newWeeks).find(week => {
-        const todayDate = new Date().setHours(0, 0, 0, 0);
-        const weekDate = new Date(week.gameday).setHours(0, 0, 0, 0);
-        return weekDate > todayDate;
-      });
-      const newCurrentWeek = nextWeek ? nextWeek.id : finalWeek.id;
-
-
-      setTeams(newTeams);
-      setGames(newGames);
-      setWeeks(newWeeks);
-      setCurrentWeek(newCurrentWeek);
-      setLoading(false);
-    }
-
-    init();
-  }, [leagueId]);
-
   const setLeagueId = useCallback((newLeagueId) => {
     if (newLeagueId !== leagueId) {
-      setLoading(true);
       Storage.set('leagueId', newLeagueId);
-      setLeague(leagues[newLeagueId]);
       setLeagueIdState(newLeagueId);
+      initFirebaseStore();
     }
-  }, [leagueId, leagues]);
+  }, [leagueId]);
+
+  // useEffect(() => {
+  //   if (leagueId) {
+  //     Storage.set('leagueId', leagueId);
+  //     initFirebaseStore();
+  //   }
+  // }, [leagueId]);
 
   const value = useMemo(() => ({
-    loading,
     leagues,
     leagueId,
-    league,
-    teams,
-    weeks,
-    currentWeek,
-    games,
     setLeagueId
-  }), [loading, leagues, leagueId, league, teams, weeks, currentWeek, games, setLeagueId]);
+  }), [leagues, leagueId, setLeagueId]);
 
   return (<LeagueContext.Provider value={value}>{children}</LeagueContext.Provider>);
 }
+
+// /* ---------------------------------- */
+// // LeagueContext
+
+// const LeagueContext = React.createContext();
+// function LeagueProvider({ children }) {
+
+//   const [loading, setLoading] = useState(true);
+//   const [leagues, setLeagues] = useState(null);
+//   const [leagueId, setLeagueIdState] = useState(null);
+//   const [league, setLeague] = useState(null);
+//   const [teams, setTeams] = useState(null);
+//   const [weeks, setWeeks] = useState(null);
+//   const [currentWeek, setCurrentWeek] = useState(null);
+//   const [games, setGames] = useState(null);
+
+//   // fetch leagues only once and confirm valid leagueId
+//   useEffect(() => {
+//     const init = async () => {
+//       const dbLeagues = await get(child(ref(db), 'leagues')).then(s => s.val());
+//       const storedLeagueId = Storage.get('leagueId');
+//       const validLeagueId = storedLeagueId && dbLeagues[storedLeagueId] ? storedLeagueId : Object.keys(dbLeagues)[0];
+
+//       setLeagues(dbLeagues);
+//       setLeague(dbLeagues[validLeagueId])
+//       setLeagueIdState(validLeagueId);
+//     }
+
+//     init();
+//   }, []);
+
+//   // fetch league data
+//   useEffect(() => {
+
+//     const init = async () => {
+//       if (!leagueId) return;
+
+//       resetFirebaseStore();
+
+//       // teams
+//       const newTeams = await get(child(ref(db), `teams/${leagueId}`)).then(s => s.val());
+
+//       // games (with some team data)
+//       const newGames = await get(child(ref(db), `games/${leagueId}`)).then(s => s.val());
+//       for (const wId in newGames) {
+//         for (const gId in newGames[wId]) {
+//           const game = newGames[wId][gId];
+//           for (const tId in game.teams) {
+//             const team = newTeams[tId];
+//             game.teams[tId] = {
+//               id: team.id,
+//               nbr: team.nbr,
+//               name: team.name,
+//             };
+//           }
+//         }
+//       }
+
+//       // weeks
+//       const newWeeks = await get(child(ref(db), `weeks/${leagueId}`)).then(s => s.val());
+//       const finalWeek = Object.values(newWeeks).pop();
+//       const nextWeek = Object.values(newWeeks).find(week => {
+//         const todayDate = new Date().setHours(0, 0, 0, 0);
+//         const weekDate = new Date(week.gameday).setHours(0, 0, 0, 0);
+//         return weekDate > todayDate;
+//       });
+//       const newCurrentWeek = nextWeek ? nextWeek.id : finalWeek.id;
+
+//       console.log('LEAGUE DATA:', newTeams, newGames, newWeeks, newCurrentWeek);
+
+
+//       setTeams(newTeams);
+//       setGames(newGames);
+//       setWeeks(newWeeks);
+//       setCurrentWeek(newCurrentWeek);
+//       setLoading(false);
+//     }
+
+//     init();
+//   }, [leagueId]);
+
+//   const setLeagueId = useCallback((newLeagueId) => {
+//     if (newLeagueId !== leagueId) {
+//       setLoading(true);
+//       Storage.set('leagueId', newLeagueId);
+//       setLeague(leagues[newLeagueId]);
+//       setLeagueIdState(newLeagueId);
+//     }
+//   }, [leagueId, leagues]);
+
+//   const value = useMemo(() => ({
+//     loading,
+//     leagues,
+//     leagueId,
+//     league,
+//     teams,
+//     weeks,
+//     currentWeek,
+//     games,
+//     setLeagueId
+//   }), [loading, leagues, leagueId, league, teams, weeks, currentWeek, games, setLeagueId]);
+
+//   return (<LeagueContext.Provider value={value}>{children}</LeagueContext.Provider>);
+// }
 
 /* ---------------------------------- */
 // NavHiddenContext

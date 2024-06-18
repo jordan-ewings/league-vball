@@ -8,10 +8,7 @@ import { useLeague } from '../contexts/SessionContext';
 
 export default function Footer() {
 
-  const { loading, league } = useLeague();
-  const leagueTitle = useMemo(() => league?.title, [league]);
-
-  if (loading) return null;
+  const leagueTitle = useLeagueTitle();
 
   return (
     <footer className='footer'>
@@ -20,4 +17,14 @@ export default function Footer() {
       </div>
     </footer>
   );
+}
+
+/* ---------------------------------- */
+
+function useLeagueTitle() {
+
+  const { leagues, leagueId } = useLeague();
+  if (leagues && leagueId) {
+    return leagues.find(l => l.id === leagueId).title;
+  }
 }

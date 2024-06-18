@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useOptions, useLeague } from '../../contexts/SessionContext';
-import { useFirebase } from '../../hooks/useFirebase';
+import { useFirebase } from '../../firebase/useFirebase';
+import { useNavigate } from 'react-router-dom';
 
 import './style.css';
+import { set } from 'firebase/database';
 
 /* ---------------------------------- */
 // stdChild
@@ -24,6 +26,62 @@ export function MainHeader({ children }) {
       {children}
     </div>
   )
+}
+
+// MainHeader title
+MainHeader.Title = function MainHeaderTitle({ text }) {
+  return (
+    <div className="main-header-title">
+      <span>{text || 'Loading...'}</span>
+    </div>
+  );
+}
+
+// MainHeader back button
+MainHeader.BackButton = function MainHeaderBackButton({ onClick }) {
+
+  return (
+    <ButtonInline
+      className="btn-back"
+      icon="fa-solid fa-chevron-left"
+      text="Back"
+      onClick={onClick}
+    />
+  );
+}
+
+// MainHeader save button
+MainHeader.SaveButton = function MainHeaderSaveButton({ onClick, disabled = false }) {
+
+  const [status, setStatus] = useState('idle');
+
+  const handleClick = () => {
+    if (status !== 'idle') return;
+    setStatus('pending');
+    onClick()
+      .then(() => {
+        setStatus('done');
+        setTimeout(() => setStatus('idle'), 1000);
+      })
+      .catch(error => {
+        setStatus('idle');
+        console.error('Error updating data:', error);
+      });
+  }
+
+  const icon = status === 'pending' ? 'fa-solid fa-spinner fa-spin' : status === 'done' ? 'fa-solid fa-check' : null;
+  const text = status !== 'idle' ? null : 'Save';
+  const isDisabled = status === 'idle' ? disabled : false;
+
+  return (
+    <ButtonInline
+      icon={icon}
+      text={text}
+      onClick={handleClick}
+      disabled={isDisabled}
+      className="btn-save"
+    />
+  );
 }
 
 /* ---------------------------------- */
@@ -134,9 +192,12 @@ export function Spinner() {
 /* ---------------------------------- */
 // ButtonInline
 
-export function ButtonInline({ icon, text, onClick, className = '' }) {
+export function ButtonInline({ icon, text, onClick, disabled = false, className = '' }) {
+
+  const btnClass = `button-inline ${className} ${disabled ? 'disabled' : ''}`;
+
   return (
-    <div className={`button-inline ${className}`} role="button" onClick={onClick}>
+    <div className={btnClass} onClick={onClick} role="button">
       {icon && <i className={icon}></i>}
       <span>{text}</span>
     </div>
@@ -146,7 +207,7 @@ export function ButtonInline({ icon, text, onClick, className = '' }) {
 /* ---------------------------------- */
 // Stepper
 
-export function Stepper({ initialValue, onChange }) {
+export function Stepper({ initialValue, onChange, disabled = false }) {
 
   const [value, setValue] = useState(initialValue);
   const change = value - initialValue;
@@ -161,67 +222,47 @@ export function Stepper({ initialValue, onChange }) {
 
   return (
     <div className={`stepper ${change != 0 ? 'changed' : ''}`}>
-      <div className="stepper-value-initial">{initialValue}</div>
+      {!disabled && <div className="stepper-value-initial">{initialValue}</div>}
       <div className={`stepper-value ${!change && value == 0 ? 'zero' : ''}`}>{value}</div>
-      <div className="stepper-input">
-        <div className="stepper-btn-group">
-          <div role="button" className="stepper-btn stepper-down" onClick={() => handleClick(-1)}>
-            <i className="bi bi-dash-lg"></i>
-          </div>
-          <div className="separator"></div>
-          <div role="button" className="stepper-btn stepper-up" onClick={() => handleClick(1)}>
-            <i className="bi bi-plus-lg"></i>
+      {!disabled && (
+        <div className="stepper-input">
+          <div className="stepper-btn-group">
+            <div role="button" className="stepper-btn stepper-down" onClick={() => handleClick(-1)}>
+              <i className="bi bi-dash-lg"></i>
+            </div>
+            <div className="separator"></div>
+            <div role="button" className="stepper-btn stepper-up" onClick={() => handleClick(1)}>
+              <i className="bi bi-plus-lg"></i>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
 
-// export function Stepper({ value, setValue }) {
-
-//   const [change, setChange] = useState(0);
-
-//   const handleClick = (diff) => {
-//     const newValue = value + diff;
-//     if (newValue < 0) return;
-//     setValue(newValue);
-//     setChange(newValue - initial);
-//   }
-
-//   // if initial changes, reset value and change
-//   useEffect(() => {
-//     setChange(0);
-//   }, [initial]);
-
-//   return (
-//     <div className={`stepper ${change != 0 ? 'changed' : ''} ${disabled ? 'disabled' : ''}`}>
-//       <div className="stepper-value-initial">{initial}</div>
-//       <div className={`stepper-value ${!change && value == 0 ? 'zero' : ''}`}>{value}</div>
-//       <div className="stepper-input">
-//         <div className="stepper-btn-group">
-//           <div role="button" className="stepper-btn stepper-down" onClick={() => handleClick(-1)}>
-//             <i className="bi bi-dash-lg"></i>
-//           </div>
-//           <div className="separator"></div>
-//           <div role="button" className="stepper-btn stepper-up" onClick={() => handleClick(1)}>
-//             <i className="bi bi-plus-lg"></i>
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
-
 /* ---------------------------------- */
 // TextInput
-// e.g. <TextInput type="password" placeholder="Enter password..." ref={ref} />
-// e.g. <TextInput type="text" placeholder="Enter name..." onChange={handleChange} value={name} />
-// (variety of props that may or may not be used)
-// must allow other components to pass in a ref (but not required)
 
 export const TextInput = React.forwardRef(({ type, placeholder, onChange }, ref) => {
   return (
     <input className="text-input" type={type} placeholder={placeholder} onChange={onChange} ref={ref} />
   );
 });
+
+/* ---------------------------------- */
+// Table
+
+export function Table({ children, ...props }) {
+
+  let className = "table";
+  if ('className' in props) className += ' ' + props.className;
+
+  return (
+    <div className="table-responsive">
+      <table className={className}>
+        {children}
+      </table>
+    </div>
+  );
+}

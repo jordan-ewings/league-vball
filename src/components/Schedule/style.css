@@ -117,7 +117,8 @@
 
 /* ----- handle main-col spacing ----- */
 
-.game-item .team-col {
+.game-item .team-col,
+.game-item .team-label {
   flex-shrink: 1;
   overflow: hidden;
 }
@@ -136,6 +137,33 @@
 .game-item .edit-col {
   display: flex;
   flex-direction: column;
+}
+
+/* ---------------------------------- */
+
+.game-item .main-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  row-gap: .3rem;
+}
+
+.game-item .team-row,
+.game-item .cancel-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  column-gap: .5rem;
+}
+
+.game-item .team-matches-row,
+.game-item .cancel-matches-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  column-gap: .3rem;
 }
 
 /* ---------------------------------- */
@@ -203,20 +231,27 @@
 
 /* ---------------------------------- */
 
-.game-item .team-item,
+/* .game-item .team-label,
 .game-item .match-item {
   height: 1.5rem;
+} */
+
+.game-item .match-item {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
 }
 
 .game-item .match-item i {
   font-size: 1.1rem;
-  line-height: 1.5rem;
+  line-height: 1.2rem;
   transition: all 0.2s;
 }
 
 .game-item-form .match-item i {
-  font-size: 1.4rem;
-  line-height: 1.5rem;
+  font-size: 1.7rem;
+  line-height: 1.8rem;
   transition: all 0.2s;
 }
 
@@ -245,6 +280,11 @@
 .game-item:not(.game-item-form) .match-item.cancel {
   display: none;
 }
+
+/* .game-item:not(.game-item-form) .match-item.cancel {
+  display: none;
+} */
+
 
 .game-item-form .match-item.cancel i {
   opacity: 0.25;
