@@ -10,10 +10,10 @@ import { ContextProvider } from '../contexts/SessionContext';
 import Navbar from './Navbar';
 import Footer from './Footer';
 
-import Home from './Home';
-import Standings from './Standings';
-import Stats from './Stats';
-import Schedule from './Schedule';
+import Home from './Home/Home';
+import Standings from './Standings/Standings';
+import Stats from './Stats/Stats';
+import Schedule from './Schedule/Schedule';
 
 /* ---------------------------------- */
 

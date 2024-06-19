@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useOptions, useLeague } from '../../contexts/SessionContext';
 import { useFirebase } from '../../firebase/useFirebase';
 import { useNavigate } from 'react-router-dom';
+import { ClipLoader } from 'react-spinners';
 
 import './style.css';
 import { set } from 'firebase/database';
@@ -98,7 +99,9 @@ export function ContCard({ children,
     <div className={`cont-card ${className}`}>
       <div className="cont-card-title">{stdChild(title)}</div>
       <div className="cont-card-body">
-        {loading ? <MenuItem main={<Spinner />} /> : children}
+        {loading
+          ? <MenuItem main={<SpinnerBlock />} />
+          : children}
       </div>
       <div className="cont-card-footer">{stdChild(footer)}</div>
     </div>
@@ -187,6 +190,21 @@ export function Spinner() {
   return (
     <div className="spinner spinner-border spinner-border-sm"></div>
   );
+}
+
+/* ---------------------------------- */
+// Loader
+
+export function SpinnerBlock({ align = 'start', size = '1.5rem' }) {
+
+  const divClass = `d-flex flex-column align-self-stretch justify-content-center align-items-${align}`;
+
+  return (
+    <div className={divClass}>
+      <ClipLoader color={'#0a84ff'} size={size} />
+    </div>
+  );
+
 }
 
 /* ---------------------------------- */

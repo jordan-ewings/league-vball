@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useOptions } from '../../contexts/SessionContext';
-import { useCache } from '../../firebase/useFirebase';
+import { useFirebaseCache } from '../../firebase/useFirebase';
 
 import {
   ContCard,
@@ -14,19 +14,28 @@ import {
 export default function TeamSelect() {
 
   const { favTeam, setFavTeam } = useOptions();
-  const teams = useCache('teams');
+  const teams = useFirebaseCache('teams', raw => {
+    const data = Object.values(raw).map(team => {
+      return {
+        id: team.id,
+        name: team.name,
+        nbr: team.nbr,
+      };
+    });
 
-  const options = !teams ? null : Object.values(teams).sort((a, b) => {
-    if (a.name === favTeam) return -1;
-    if (b.name === favTeam) return 1;
-    return 0;
+    data.sort((a, b) => {
+      if (a.name === favTeam) return -1;
+      if (b.name === favTeam) return 1;
+      return 0;
+    });
+    return data;
   });
 
   return (
     <div id="team-select-container">
-      <ContCard title="MY TEAM" loading={!options}>
+      <ContCard title="MY TEAM" loading={!teams}>
         <div className="radio-menu">
-          {options && options.map(team => {
+          {teams && teams.map(team => {
             const isFav = team.name == favTeam;
             return (
               <RadioMenuItem

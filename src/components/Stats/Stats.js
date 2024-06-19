@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback, memo, useRef, createRef } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth, useLeague, useOptions, useNavHidden } from '../../contexts/SessionContext';
-import { useFirebase, useCache } from '../../firebase/useFirebase';
+import { useFirebase, useFirebaseCache } from '../../firebase/useFirebase';
 import { get, child, ref, onValue, off, set, update, increment } from "firebase/database";
 
 import {
@@ -22,8 +22,8 @@ export default function WeekStats() {
   const { weekId } = useParams();
   const { leagueId } = useLeague();
   const { controls } = useAuth();
-  const weeks = useCache('weeks');
-  const teams = useCache('teams');
+  const weeks = useFirebaseCache('weeks');
+  const teams = useFirebaseCache('teams');
   const [updates, setUpdates] = useState({});
   const { setNavHidden } = useNavHidden();
   const navigate = useNavigate();
