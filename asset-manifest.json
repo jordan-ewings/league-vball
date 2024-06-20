@@ -1,13 +1,13 @@
 {
   "files": {
-    "main.css": "/league-vball/static/css/main.6b4a8d13.css",
-    "main.js": "/league-vball/static/js/main.979d986f.js",
+    "main.css": "/league-vball/static/css/main.dc81e291.css",
+    "main.js": "/league-vball/static/js/main.2315d43e.js",
     "index.html": "/league-vball/index.html",
-    "main.6b4a8d13.css.map": "/league-vball/static/css/main.6b4a8d13.css.map",
-    "main.979d986f.js.map": "/league-vball/static/js/main.979d986f.js.map"
+    "main.dc81e291.css.map": "/league-vball/static/css/main.dc81e291.css.map",
+    "main.2315d43e.js.map": "/league-vball/static/js/main.2315d43e.js.map"
   },
   "entrypoints": [
-    "static/css/main.6b4a8d13.css",
-    "static/js/main.979d986f.js"
+    "static/css/main.dc81e291.css",
+    "static/js/main.2315d43e.js"
   ]
 }
