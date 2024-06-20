@@ -54,22 +54,17 @@
   padding: .25rem 0;
 }
 
-.game-group .cont-card-body {
-  row-gap: .8rem;
-  padding: .8rem 0;
-  padding-left: .25rem;
-  padding-right: .25rem;
-}
-
 /* ---------------------------------- */
 
 .game-item {
   -webkit-user-select: none;
   user-select: none;
-  padding: 0 .1rem;
-  /* display: flex;
-  flex-direction: column; */
-  padding-right: .25rem;
+  padding: .8rem .25rem;
+  border-top: .8px solid var(--ios-separator-opaque);
+}
+
+.game-item:first-child {
+  border-top: none;
 }
 
 .game-item.pending {
@@ -82,10 +77,14 @@
 .game-item .main-col,
 .game-item .alert-col {
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  column-gap: .75rem;
+  flex-direction: column;
+  justify-content: flex-start;
+  row-gap: .3rem;
   padding-right: .75rem;
+}
+
+.game-item .alert-col {
+  padding-left: .25rem;
 }
 
 .game-item .stat-col,
@@ -95,43 +94,18 @@
   justify-content: space-between;
   column-gap: .5rem;
   padding-left: .75rem;
+  padding-right: .25rem;
   border-left: .8px solid var(--ios-separator-opaque);
 }
 
-/* ----- aligned team/match items ----- */
-
-.game-item .team-col,
-.game-item .match-col {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  row-gap: .2rem;
-  transition: all 0.2s;
-}
-
-.game-item-form .team-col,
-.game-item-form .match-col {
-  row-gap: .6rem;
-  transition: all 0.2s;
-}
-
-/* ----- handle main-col spacing ----- */
-
-.game-item .team-col,
-.game-item .team-label {
-  flex-shrink: 1;
-  overflow: hidden;
-}
-
-.game-item .matches-col {
+.game-item .main-row,
+.game-item .matches-row {
   display: flex;
   flex-direction: row;
-  justify-content: flex-end;
-  column-gap: .5rem;
-  flex-grow: 1;
+  justify-content: space-between;
+  align-items: center;
+  column-gap: .3rem;
 }
-
-/* ----- other ----- */
 
 .game-item .info-col,
 .game-item .edit-col {
@@ -141,52 +115,47 @@
 
 /* ---------------------------------- */
 
-.game-item .main-col {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  row-gap: .3rem;
-}
-
-.game-item .team-row,
-.game-item .cancel-row {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  column-gap: .5rem;
-}
-
-.game-item .team-matches-row,
-.game-item .cancel-matches-row {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  column-gap: .3rem;
+.game-item:not(.game-item-form) .cancel-row {
+  display: none;
 }
 
 /* ---------------------------------- */
 
-.game-item .edit-icon-circle {
-  background-color: var(--ios-bg-tertiary);
+.icon-button {
+  --size: 2rem;
+  --icon-size: calc(var(--size) * .6);
+  --background-color: var(--ios-bg-tertiary);
+  --padding: .25rem;
+  background-color: var(--background-color);
   border-radius: 50%;
-  width: 1.9rem;
-  height: 1.9rem;
+  width: var(--size);
+  height: var(--size);
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-top: .4rem;
+  padding: var(--padding);
+  transition: all 0.2s;
 }
 
-.game-item .edit-icon {
+.icon-button.bare {
+  --icon-size: calc(var(--size) * .95);
+  --padding: 0;
+  --background-color: transparent;
+}
+
+.icon-button.small {
+  --size: 1.2rem;
+}
+
+.icon-button.disabled {
+  pointer-events: none;
+}
+
+.icon-button i {
   color: var(--ios-blue);
-  object-fit: contain;
-  font-size: .9rem;
-}
-
-.game-item-form .edit-icon {
-  font-size: 1.2rem;
+  font-size: var(--icon-size);
+  line-height: var(--icon-size);
+  transition: all 0.2s;
 }
 
 /* ---------------------------------- */
@@ -201,6 +170,11 @@
   color: var(--ios-text-secondary);
   font-size: .85rem;
   font-weight: 200;
+}
+
+.game-item .team-label {
+  flex-shrink: 1;
+  overflow: hidden;
 }
 
 .game-item .team-nbr {
@@ -229,35 +203,14 @@
   display: none;
 }
 
+.game-item .cancel-label .team-name {
+  color: var(--ios-text-secondary) !important;
+  /* opacity: .75; */
+  font-style: italic;
+  font-weight: 300;
+}
+
 /* ---------------------------------- */
-
-/* .game-item .team-label,
-.game-item .match-item {
-  height: 1.5rem;
-} */
-
-.game-item .match-item {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-}
-
-.game-item .match-item i {
-  font-size: 1.1rem;
-  line-height: 1.2rem;
-  transition: all 0.2s;
-}
-
-.game-item-form .match-item i {
-  font-size: 1.7rem;
-  line-height: 1.8rem;
-  transition: all 0.2s;
-}
-
-.game-item:not(.game-item-form) .match-item {
-  pointer-events: none;
-}
 
 .game-item .match-item i.bi-circle {
   opacity: .25;
@@ -265,26 +218,15 @@
   transition: all 0.1s ease-in-out;
 }
 
+.game-item.post:not(.game-item-form) .match-item i.bi-circle {
+  opacity: 0;
+}
+
 .game-item .match-item i.bi-check-circle {
   opacity: 1;
   color: var(--ios-green);
   transition: all 0.1s ease-in-out;
 }
-
-.game-item:not(.game-item-form) .match-col.post .match-item i.bi-circle {
-  opacity: 0;
-}
-
-
-
-.game-item:not(.game-item-form) .match-item.cancel {
-  display: none;
-}
-
-/* .game-item:not(.game-item-form) .match-item.cancel {
-  display: none;
-} */
-
 
 .game-item-form .match-item.cancel i {
   opacity: 0.25;
@@ -297,7 +239,7 @@
 }
 
 
-.game-item .match-col {
+/* .game-item .match-col {
   position: relative;
 }
 
@@ -309,15 +251,22 @@
   width: 100%;
   border-top: 2px solid var(--ios-red);
   transform: translateY(-50%);
-}
+} */
 
 /* ---------------------------------- */
 
 .game-item-form .alert {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  column-gap: .5rem;
   font-size: .9rem;
-  font-weight: 400;
-  padding: .6rem;
-  border-radius: 10px;
+  padding: .4rem .5rem;
+  margin: 0;
+}
+
+.game-item-form .alert i {
+  font-size: 1.1rem;
 }
 
 .game-item-form .alert p:nth-child(2) {

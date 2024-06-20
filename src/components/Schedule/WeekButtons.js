@@ -15,10 +15,7 @@ import './style.css';
 
 export default function WeekButtons({ activeWeek, setActiveWeek }) {
 
-  const weeks = useFirebaseCache('weeks', (raw) => {
-    return Object.values(raw);
-  });
-
+  const weeks = useFirebaseCache('weeks', (raw) => Object.values(raw));
   const activeButtonRef = useRef(null);
 
   useLayoutEffect(() => {

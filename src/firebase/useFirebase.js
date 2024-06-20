@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useSyncExternalStore, useRef, useMemo } from "react";
-import { get, off, child, ref, onValue, set, onChildAdded } from "firebase/database";
+import { get, off, child, ref, onValue, set, update } from "firebase/database";
 import { db } from "./firebase";
 import { useLeague } from "../contexts/SessionContext";
 
@@ -11,9 +11,7 @@ const subscribers = new Map();
 const listeners = new Set();
 
 /* ---------------------------------- */
-// init (called from LeagueContext when league changes)
-// clear existing cache, store, listeners, subscribers
-// load some initial data to cache
+// initFirebaseStore
 
 export function initFirebaseStore() {
 
@@ -25,20 +23,113 @@ export function initFirebaseStore() {
 }
 
 /* ---------------------------------- */
-// cache hooks
+// useFunctions
+// misc methods/function to be performed on each data nodes
 
-function readStore(reference) {
-  if (store.has(reference)) {
-    return store.get(reference);
-  }
-  return null;
+export function useFunctions() {
+
+  const refs = useLeaguePaths();
+
+  const matchesFromGames = (games) => {
+    const result = [];
+    Object.entries(games).forEach(([wId, wGames]) => {
+      Object.entries(wGames).forEach(([gId, game]) => {
+        Object.entries(game.matches).forEach(([mId, match]) => {
+          result.push({
+            weekId: wId,
+            gameId: gId,
+            matchId: mId,
+            ...game,
+            ...match
+          });
+        });
+      });
+    });
+
+    return result;
+  };
+
+  const teamStatsFromGames = (games, teamId, weekId) => {
+    const matchData = matchesFromGames(games).filter(m => m.teams[teamId] && m.status === 'POST');
+    const data = weekId ? matchData.filter(m => m.weekId === weekId) : matchData;
+    const count = data.length;
+    const wins = (count > 0) ? data.filter(m => m.winner === teamId).length : 0;
+    const losses = count - wins;
+    const record = `${wins}-${losses}`;
+    const winPct = (count > 0) ? wins / count : 0;
+
+    return { count, wins, losses, record, winPct };
+  };
+
+  const updateGameMatches = async (gameId, newMatches) => {
+    const games = await getFirebase(refs.games());
+    const weekId = Object.keys(games).find(wId => games[wId][gameId]);
+    const game = games[weekId][gameId];
+    game.matches = newMatches;
+
+    const updates = {};
+    updates[refs.games(weekId, gameId, 'matches')] = newMatches;
+    Object.keys(game.teams).forEach(teamId => {
+      updates[refs.teams(teamId, 'stats', 'games')] = teamStatsFromGames(games, teamId);
+      updates[refs.stats(weekId, teamId, 'games')] = teamStatsFromGames(games, teamId, weekId);
+    });
+
+    console.log('updateGameMatches:', updates);
+    update(ref(db), updates);
+  };
+
+  return {
+    matchesFromGames,
+    teamStatsFromGames,
+    updateGameMatches,
+  };
 }
 
-function readCache(reference) {
-  if (cache.has(reference)) {
-    return cache.get(reference);
-  }
-  return null;
+/* ---------------------------------- */
+// useFirebaseOnce
+// transform is either:
+// - a function to transform the data
+// - 'array', indicating the data should be transformed into an array
+
+export async function getFirebase(reference, transform) {
+
+  const result = await get(child(ref(db), reference)).then(s => {
+    const data = s.val();
+    if (data !== null && data !== undefined) {
+      if (transform) {
+        if (transform === 'array') {
+          return Object.values(data);
+        }
+        return transform(data);
+      }
+    }
+    return null;
+  });
+
+  return result;
+}
+
+/* ---------------------------------- */
+// useLeaguePaths
+
+export function useLeaguePaths() {
+
+  const { leagueId } = useLeague();
+  const paths = useMemo(() => {
+    return {
+      weeks: (weekId, ...nodes) => parseReference(makePath('weeks', [weekId, ...nodes]), leagueId),
+      games: (weekId, gameId, ...nodes) => parseReference(makePath('games', [weekId, gameId, ...nodes]), leagueId),
+      teams: (teamId, ...nodes) => parseReference(makePath('teams', [teamId, ...nodes]), leagueId),
+      stats: (weekId, teamId, ...nodes) => parseReference(makePath('stats', [weekId, teamId, ...nodes]), leagueId),
+    }
+  }, [leagueId]);
+
+  return paths;
+}
+
+function makePath(base, nodes) {
+  const ext = nodes.length > 0 ? `/${nodes.join('/')}` : '';
+  return `${base}${ext}`;
 }
 
 /* ---------------------------------- */
@@ -48,7 +139,6 @@ export function useFirebaseCache(reference, transform) {
 
   const { leagueId } = useLeague();
   const path = useMemo(() => parseReference(reference, leagueId), [reference, leagueId]);
-
   const data = _useFirebaseCache(path);
   const result = useMemo(() => {
     if (data !== null && data !== undefined) {
@@ -67,13 +157,11 @@ function _useFirebaseCache(reference) {
 
   useEffect(() => {
     if (reference && data === null) {
-
       const cacheData = readCache(reference);
       if (cacheData) {
         setData(cacheData);
         return;
       }
-
       const storeData = readStore(reference);
       if (storeData) {
         cache.set(reference, storeData);
@@ -81,72 +169,43 @@ function _useFirebaseCache(reference) {
         setData(storeData);
         return;
       }
-
       get(child(ref(db), reference)).then((snapshot) => {
         const data = snapshot.val();
         cache.set(reference, data);
         console.log(`cache ${reference}:`, data);
         setData(data);
       });
-
     }
   }, [reference, data]);
 
   return data;
 }
 
-/* ---------------------------------- */
-// sync hooks
-// optionally transform data before returning
+function readStore(reference) {
+  if (store.has(reference)) {
+    return store.get(reference);
+  }
+  return null;
+}
 
-// export function useSync(node, ext) {
-//   const { leagueId } = useLeague();
-//   const path = (leagueId) ? `${node}/${leagueId}` + (ext ? '/' + ext : '') : null;
-//   return useFirebase(path);
-// }
-
-// export function useSyncTeams(ext) {
-//   const { leagueId } = useLeague();
-//   const path = `teams/${leagueId}` + (ext ? '/' + ext : '');
-//   return useFirebase(path);
-// }
-
-// export function useSyncGames(ext) {
-//   const { leagueId } = useLeague();
-//   const path = `games/${leagueId}` + (ext ? '/' + ext : '');
-//   return useFirebase(path);
-// }
-
-// export function useSyncWeeks(ext) {
-//   const { leagueId } = useLeague();
-//   const path = `weeks/${leagueId}` + (ext ? '/' + ext : '');
-//   return useFirebase(path);
-// }
-
-// export function useSyncStats(ext) {
-//   const { leagueId } = useLeague();
-//   const path = `stats/${leagueId}` + (ext ? '/' + ext : '');
-//   return useFirebase(path);
-// }
+function readCache(reference) {
+  if (cache.has(reference)) {
+    return cache.get(reference);
+  }
+  return null;
+}
 
 /* ---------------------------------- */
 // checkers
 
-// if reference is null, return null
-// if leagueId is null, return null
-// if ref contains leagueId, no need to parse
-// if ref doesn't contain leagueId:
-//  if ref is just a string with no slashes, add leagueId
-//  if ref is a string with one or more slashes, insert leagueId after first slash
 function parseReference(reference, leagueId) {
+  if (!reference) return null;
+  if (!leagueId) return null;
 
-  if (!reference || !leagueId) return null;
   if (reference.includes(leagueId)) return reference;
-
   if (reference.includes('/')) {
     return reference.replace('/', `/${leagueId}/`);
   }
-
   return `${reference}/${leagueId}`;
 }
 
@@ -157,8 +216,6 @@ export function useFirebase(reference, transform) {
 
   const { leagueId } = useLeague();
   const path = useMemo(() => parseReference(reference, leagueId), [reference, leagueId]);
-
-  // note: data may be null for a moment while loading
   const data = _useFirebase(path);
   const result = useMemo(() => {
     if (data !== null && data !== undefined) {

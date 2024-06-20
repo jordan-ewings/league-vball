@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useMemo, useCallback, memo, useRef, useLayoutEffect } from 'react';
 import { useFirebase, useFirebaseCache } from '../../firebase/useFirebase';
 
-import { MainHeader } from '../common';
+import { MainHeader, SpinnerBlock } from '../common';
 import WeekGames from './WeekGames';
 import WeekButtons from './WeekButtons';
 
@@ -23,7 +23,7 @@ export default function Schedule() {
     }
   }, [currentWeek]);
 
-  return (
+  return !activeWeek ? <SpinnerBlock align="center" size="3rem" /> : (
     <div className="section">
       <MainHeader>
         <WeekButtons activeWeek={activeWeek} setActiveWeek={setActiveWeek} />
