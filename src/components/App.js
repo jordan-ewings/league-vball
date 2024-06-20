@@ -6,6 +6,7 @@ import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-d
 import { CSSTransition, SwitchTransition } from 'react-transition-group'; // npm install react-transition-group
 import { Container } from 'react-bootstrap'; // npm install react-bootstrap
 
+
 import { ContextProvider } from '../contexts/SessionContext';
 import Navbar from './Navbar';
 import Footer from './Footer';
@@ -14,6 +15,12 @@ import Home from './Home/Home';
 import Standings from './Standings/Standings';
 import Stats from './Stats/Stats';
 import Schedule from './Schedule/Schedule';
+
+import '@ionic/react/css/core.css';
+import { setupIonicReact } from '@ionic/react';
+setupIonicReact({
+  mode: 'ios'
+});
 
 /* ---------------------------------- */
 

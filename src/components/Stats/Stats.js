@@ -14,6 +14,9 @@ import {
 } from '../common';
 import { db } from '../../firebase/firebase';
 
+import { IonButton, IonButtons, IonBackButton, IonHeader, IonContent, IonNavLink, IonToolbar, IonTitle } from '@ionic/react';
+
+
 /* ---------------------------------- */
 // WeekStats
 
@@ -52,10 +55,44 @@ export default function WeekStats() {
   /* ---------------------------------- */
   // render
 
+  //   return (
+  //     <div id="week-stats-container">
+  //       <IonHeader>
+  //         <IonToolbar>
+  //           <IonButtons slot="start">
+  //             <IonBackButton defaultHref="/standings"></IonBackButton>
+  //           </IonButtons>
+  //           <IonTitle>{weeks && weeks[weekId] ? weeks[weekId].label : 'Week'}</IonTitle>
+  //           {controls && (
+  //             <IonButtons slot="end">
+  //               <IonButton onClick={handleSave} disabled={Object.keys(updates).length == 0}>Save</IonButton>
+  //             </IonButtons>
+  //           )}
+  //         </IonToolbar>
+  //       </IonHeader>
+  //       <div className="main-body">
+  //         <ContCard title="TEAM DRINKS" loading={!teams}>
+  //           {teams && Object.values(teams).map(team => (
+  //             <TeamDrinksItem
+  //               key={team.id}
+  //               team={team}
+  //               refWeekStat={`stats/${leagueId}/${weekId}/${team.id}/drinks/count`}
+  //               refTeamStat={`teams/${leagueId}/${team.id}/stats/drinks/count`}
+  //               setUpdates={setUpdates}
+  //               readOnly={!controls}
+  //             />
+  //           ))}
+  //         </ContCard>
+  //       </div>
+  //     </div>
+  //   );
+  // }
+
   return (
     <div id="week-stats-container">
       <MainHeader>
         <MainHeader.BackButton onClick={handleBack} />
+        <IonBackButton></IonBackButton>
         <MainHeader.Title text={weeks && weeks[weekId] ? weeks[weekId].label : 'Week'} />
         {controls && <MainHeader.SaveButton onClick={handleSave} disabled={Object.keys(updates).length == 0} />}
       </MainHeader>

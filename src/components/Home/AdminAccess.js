@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useAuth } from '../../contexts/SessionContext';
+import { IonToggle } from '@ionic/react';
 
 import {
   ContCard,
@@ -35,6 +36,10 @@ export default function AdminAccess() {
       });
   }
 
+  const handleToggle = (e) => {
+    console.log('TOGGLE:', e.detail.checked);
+  }
+
   const renderFooter = () => {
     return errorMsg && <span className="invalid-msg">{errorMsg}</span>;
   }
@@ -56,7 +61,7 @@ export default function AdminAccess() {
             <MenuItem
               className="logged-in-form"
               main="Enable Controls"
-              trail={<Switch checked={controls} onChange={() => setControls(!controls)} />}
+              trail={<IonToggle checked={controls} onIonChange={() => setControls(!controls)} />}
             />
             <MenuItem
               className="logout-form"
