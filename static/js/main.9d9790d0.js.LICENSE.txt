@@ -4,6 +4,12 @@
 	http://jedwatson.github.io/classnames
 */
 
+/*!
+ * (C) Ionic http://ionicframework.com - MIT License
+ */
+
+/*!__STENCIL_STATIC_IMPORT_SWITCH__*/
+
 /**
  * @license
  * Copyright 2017 Google LLC
