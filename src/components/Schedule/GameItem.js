@@ -13,6 +13,8 @@ import {
 
 import {
   TeamLabel,
+  IconButton,
+  CheckboxButton,
 } from '../common';
 import { db } from '../../firebase/firebase';
 
@@ -125,13 +127,14 @@ export default function GameItem({ game, readOnly }) {
     const match = (formMatches) ? formMatches[matchId] : (matches) ? matches[matchId] : null;
     const isWinner = (match && match.winner) ? match.winner == teamId : false;
     return (
-      <IconButton
+      <CheckboxButton
         className="match-item result"
-        bare
-        icon={`bi ${isWinner ? 'bi-check-circle' : 'bi-circle'}`}
-        onClick={() => handleTeamMatchItemClick(matchId, teamId, !isWinner)}
+        size={form ? '2.3rem' : '1.4rem'}
+        color="green"
+        filled={false}
+        checked={isWinner}
         disabled={!form}
-        small={!form}
+        onClick={() => handleTeamMatchItemClick(matchId, teamId, !isWinner)}
       />
     );
   };
@@ -140,13 +143,15 @@ export default function GameItem({ game, readOnly }) {
     const match = (formMatches) ? formMatches[matchId] : (matches) ? matches[matchId] : null;
     const isCancelled = (match && match.status) ? match.status == 'CNCL' : false;
     return (
-      <IconButton
-        className={`match-item cancel ${isCancelled ? 'picked' : ''}`}
-        bare
-        icon="bi bi-x-circle"
-        onClick={() => handleCancelMatchItemClick(matchId, !isCancelled)}
+      <CheckboxButton
+        className="match-item cancel"
+        size={form ? '2.3rem' : '1.4rem'}
+        color="red"
+        xMark={true}
+        filled={false}
+        checked={isCancelled}
         disabled={!form}
-        small={!form}
+        onClick={() => handleCancelMatchItemClick(matchId, !isCancelled)}
       />
     );
   };
@@ -162,8 +167,8 @@ export default function GameItem({ game, readOnly }) {
             <div key={teamId} className={`main-row ${teamId ? 'team-row' : 'cancel-row'}`}>
               {teamId ? < TeamLabel team={teams[teamId]} withRecord /> :
                 <div className="team-label cancel-label">
-                  <span class="team-nbr"></span>
-                  <span class="team-name">Cancel</span>
+                  <span className="team-nbr"></span>
+                  <span className="team-name">Cancel</span>
                 </div>
               }
               <div className="matches-row">
@@ -200,23 +205,6 @@ export default function GameItem({ game, readOnly }) {
       </Collapse>
     </div>
   )
-}
-
-/* ---------------------------------- */
-
-function IconButton({ icon, bare = false, small = false, onClick, className = '', hide = false, disabled = false }) {
-  if (hide) return null;
-  let divClass = 'icon-button';
-  if (className) divClass += ` ${className}`;
-  if (bare) divClass += ' bare';
-  if (small) divClass += ' small';
-  if (disabled) divClass += ' disabled';
-  // const divClass = `icon-button ${className} ${bare ? 'bare' : ''} ${small ? 'small' : ''} ${disabled ? 'disabled' : ''}`;
-  return (
-    <div className={divClass} role="button" onClick={onClick}>
-      <i className={icon}></i>
-    </div>
-  );
 }
 
 /* ---------------------------------- */

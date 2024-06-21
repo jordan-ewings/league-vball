@@ -104,6 +104,10 @@
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
+  column-gap: .2rem;
+}
+
+.game-item .main-row {
   column-gap: .3rem;
 }
 
@@ -117,45 +121,6 @@
 
 .game-item:not(.game-item-form) .cancel-row {
   display: none;
-}
-
-/* ---------------------------------- */
-
-.icon-button {
-  --size: 2rem;
-  --icon-size: calc(var(--size) * .6);
-  --background-color: var(--ios-bg-tertiary);
-  --padding: .25rem;
-  background-color: var(--background-color);
-  border-radius: 50%;
-  width: var(--size);
-  height: var(--size);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: var(--padding);
-  transition: all 0.2s;
-}
-
-.icon-button.bare {
-  --icon-size: calc(var(--size) * .95);
-  --padding: 0;
-  --background-color: transparent;
-}
-
-.icon-button.small {
-  --size: 1.2rem;
-}
-
-.icon-button.disabled {
-  pointer-events: none;
-}
-
-.icon-button i {
-  color: var(--ios-blue);
-  font-size: var(--icon-size);
-  line-height: var(--icon-size);
-  transition: all 0.2s;
 }
 
 /* ---------------------------------- */
@@ -237,6 +202,11 @@
   opacity: 1;
   color: var(--ios-red);
 }
+
+/* .checkbox-button.checked.result {
+  background-color: var(--ios-green);
+  border: 1px solid var(--ios-green);
+} */
 
 
 /* .game-item .match-col {

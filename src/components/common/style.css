@@ -66,7 +66,7 @@
   justify-content: space-between;
   font-weight: 400;
   color: var(--ios-text-secondary);
-  padding: 0 1rem 0 1rem;
+  padding-inline: 1.75rem;
 }
 
 .cont-card-title>span {
@@ -84,7 +84,8 @@
 .cont-card-body {
   display: flex;
   flex-direction: column;
-  padding: 0.1rem 0;
+  /* padding: 0.1rem 0; */
+  margin-inline: .75rem;
   background-color: var(--ios-bg-secondary);
   border-radius: 10px;
 }
@@ -183,26 +184,68 @@
   text-align: center;
 }
 
+/* IconButton ---------------------------------------- */
+
+.icon-button {
+  --size: 2rem;
+  --icon-size: calc(var(--size) * .6);
+  --background-color: var(--ios-bg-tertiary);
+  --padding: .25rem;
+  background-color: var(--background-color);
+  border-radius: 50%;
+  width: var(--size);
+  height: var(--size);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--padding);
+  transition: all 0.2s;
+}
+
+.icon-button.bare {
+  --icon-size: calc(var(--size) * .95);
+  --padding: 0;
+  --background-color: transparent;
+}
+
+.icon-button.small {
+  --size: 1.2rem;
+}
+
+.icon-button.disabled {
+  pointer-events: none;
+}
+
+.icon-button i {
+  color: var(--ios-blue);
+  font-size: var(--icon-size);
+  line-height: var(--icon-size);
+  transition: all 0.2s;
+}
+
 /* RadioMenuItem ---------------------------------------- */
 
-.radio-menu .trail i {
-  font-size: 1.4rem;
+/* ion-icon {
+  font-size: 1.5rem;
+  color: red;
+} */
+
+/* .radio-menu .trail i {
+  font-size: 1.5rem;
+} */
+
+/* white circle behind icon (this wraps the icon) */
+.checkbox-button {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
 }
 
-.radio-menu .trail i.bi-circle {
-  color: var(--ios-text-quaternary);
-  opacity: .5;
-  transition: all 0.1s ease-in-out;
-}
-
-.radio-menu .trail i.bi-check-circle-fill {
-  color: var(--ios-green);
-  opacity: 1;
-  transition: all 0.1s ease-in-out;
-}
-
-.radio-menu-item {
-  transition: all 0.5s ease;
+.checkbox-button:not(.checked)>* {
+  color: var(--ios-bg-tertiary);
+  transition: all 0.15s ease-in-out;
 }
 
 /* TeamLabel ---------------------------------------- */

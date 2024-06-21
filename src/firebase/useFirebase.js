@@ -152,11 +152,10 @@ export function useFirebaseCache(reference, transform) {
 
 function _useFirebaseCache(reference) {
 
-  const cacheData = readCache(reference);
-  const [data, setData] = useState(cacheData);
+  const [data, setData] = useState(cache.get(reference));
 
   useEffect(() => {
-    if (reference && data === null) {
+    if (reference) {
       const cacheData = readCache(reference);
       if (cacheData) {
         setData(cacheData);
@@ -165,18 +164,18 @@ function _useFirebaseCache(reference) {
       const storeData = readStore(reference);
       if (storeData) {
         cache.set(reference, storeData);
-        console.log(`cache ${reference}:`, storeData);
+        console.log(`cache from store ${reference}:`, storeData);
         setData(storeData);
         return;
       }
       get(child(ref(db), reference)).then((snapshot) => {
         const data = snapshot.val();
         cache.set(reference, data);
-        console.log(`cache ${reference}:`, data);
+        console.log(`cache from fetch ${reference}:`, data);
         setData(data);
       });
     }
-  }, [reference, data]);
+  }, [reference]);
 
   return data;
 }

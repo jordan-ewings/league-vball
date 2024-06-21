@@ -17,6 +17,7 @@ import Stats from './Stats/Stats';
 import Schedule from './Schedule/Schedule';
 
 import '@ionic/react/css/core.css';
+import '@ionic/react/css/palettes/dark.always.css';
 import { setupIonicReact } from '@ionic/react';
 setupIonicReact({
   mode: 'ios'

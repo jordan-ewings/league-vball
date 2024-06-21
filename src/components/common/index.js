@@ -3,6 +3,14 @@ import { useOptions, useLeague } from '../../contexts/SessionContext';
 import { useFirebase } from '../../firebase/useFirebase';
 import { useNavigate } from 'react-router-dom';
 import { ClipLoader } from 'react-spinners';
+import { IonIcon } from '@ionic/react';
+import {
+  checkmarkCircleOutline,
+  checkmarkCircle,
+  checkmarkOutline,
+  ellipseOutline,
+  banOutline,
+} from 'ionicons/icons';
 
 import './style.css';
 import { set } from 'firebase/database';
@@ -139,6 +147,64 @@ export function MenuItem({
 }
 
 /* ---------------------------------- */
+// IconButton
+
+export function IconButton({ icon, bare = false, small = false, onClick, className = '', hide = false, disabled = false }) {
+  if (hide) return null;
+  let divClass = 'icon-button';
+  if (className) divClass += ` ${className}`;
+  if (bare) divClass += ' bare';
+  if (small) divClass += ' small';
+  if (disabled) divClass += ' disabled';
+  // const divClass = `icon-button ${className} ${bare ? 'bare' : ''} ${small ? 'small' : ''} ${disabled ? 'disabled' : ''}`;
+  return (
+    <div className={divClass} role="button" onClick={onClick}>
+      <i className={icon}></i>
+      {/* <ion-icon name="checkmark-circle-outline"></ion-icon> */}
+    </div>
+  );
+}
+
+/* ---------------------------------- */
+// CheckboxButton
+
+export function CheckboxButton({ checked, disabled, size = '1.7rem', color = 'blue', filled = true, xMark = false, className = '', onClick }) {
+
+  const handleClick = () => {
+    if (onClick && !disabled) onClick();
+  }
+
+  let classNames = 'checkbox-button';
+  if (checked) classNames += ' checked';
+  if (disabled) classNames += ' disabled';
+  if (filled) classNames += ' filled';
+  if (className) classNames += ` ${className}`;
+
+  // get --ios-{color} from css
+  const compColor = getComputedStyle(document.documentElement).getPropertyValue(`--ios-${color}`).trim();
+  const style = { fontSize: size };
+  if (checked) style.color = compColor;
+
+  return (
+    <div className={classNames} {...(!disabled && { role: 'button' })} onClick={handleClick}>
+      <IonIcon
+        icon={checked && filled && !xMark
+          ? checkmarkCircle
+          : (checked && !filled && !xMark)
+            ? checkmarkCircleOutline
+            : (xMark)
+              ? banOutline
+              : ellipseOutline}
+        style={style}
+      />
+    </div>
+  );
+}
+
+/* ---------------------------------- */
+
+
+/* ---------------------------------- */
 // RadioMenuItem
 
 export function RadioMenuItem({ title, selected = false, onClick }) {
@@ -147,8 +213,8 @@ export function RadioMenuItem({ title, selected = false, onClick }) {
     <MenuItem
       className={`radio-menu-item ${selected ? 'selected' : ''}`}
       main={title}
-      trail={<i className={`bi ${selected ? 'bi-check-circle-fill' : 'bi-circle'}`}></i>}
       onClick={onClick}
+      trail={<CheckboxButton checked={selected} onClick={onClick} />}
     />
   )
 }
