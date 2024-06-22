@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/league-vball/static/css/main.9b027ffc.css",
-    "main.js": "/league-vball/static/js/main.1d712e33.js",
+    "main.css": "/league-vball/static/css/main.49236c82.css",
+    "main.js": "/league-vball/static/js/main.fe7c015c.js",
     "static/js/867.de5c364d.chunk.js": "/league-vball/static/js/867.de5c364d.chunk.js",
     "static/js/284.685bc969.chunk.js": "/league-vball/static/js/284.685bc969.chunk.js",
     "static/js/923.f525b8d7.chunk.js": "/league-vball/static/js/923.f525b8d7.chunk.js",
     "static/js/627.850fe9e5.chunk.js": "/league-vball/static/js/627.850fe9e5.chunk.js",
     "static/js/217.02962056.chunk.js": "/league-vball/static/js/217.02962056.chunk.js",
     "index.html": "/league-vball/index.html",
-    "main.9b027ffc.css.map": "/league-vball/static/css/main.9b027ffc.css.map",
-    "main.1d712e33.js.map": "/league-vball/static/js/main.1d712e33.js.map",
+    "main.49236c82.css.map": "/league-vball/static/css/main.49236c82.css.map",
+    "main.fe7c015c.js.map": "/league-vball/static/js/main.fe7c015c.js.map",
     "867.de5c364d.chunk.js.map": "/league-vball/static/js/867.de5c364d.chunk.js.map",
     "284.685bc969.chunk.js.map": "/league-vball/static/js/284.685bc969.chunk.js.map",
     "923.f525b8d7.chunk.js.map": "/league-vball/static/js/923.f525b8d7.chunk.js.map",
@@ -17,7 +17,7 @@
     "217.02962056.chunk.js.map": "/league-vball/static/js/217.02962056.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.9b027ffc.css",
-    "static/js/main.1d712e33.js"
+    "static/css/main.49236c82.css",
+    "static/js/main.fe7c015c.js"
   ]
 }
