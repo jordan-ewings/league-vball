@@ -202,40 +202,23 @@
   transition: all 0.2s;
 }
 
-.icon-button.bare {
-  --icon-size: calc(var(--size) * .95);
+.icon-button:not(.raised) {
+  --size: 1.7rem;
+  --icon-size: calc(var(--size) * .7);
   --padding: 0;
   --background-color: transparent;
 }
 
-.icon-button.small {
-  --size: 1.2rem;
-}
-
-.icon-button.disabled {
-  pointer-events: none;
-}
-
 .icon-button i {
-  color: var(--ios-blue);
+  color: var(--ios-link);
   font-size: var(--icon-size);
   line-height: var(--icon-size);
-  transition: all 0.2s;
+  /* transition: all 0.2s; */
 }
 
 /* RadioMenuItem ---------------------------------------- */
 
-/* ion-icon {
-  font-size: 1.5rem;
-  color: red;
-} */
-
-/* .radio-menu .trail i {
-  font-size: 1.5rem;
-} */
-
-/* white circle behind icon (this wraps the icon) */
-.checkbox-button {
+.checkbox {
   display: flex;
   flex-direction: row;
   justify-content: center;
@@ -243,9 +226,13 @@
   border-radius: 50%;
 }
 
-.checkbox-button:not(.checked)>* {
+.checkbox>ion-icon {
+  font-size: 1.7rem;
+  --ionicon-stroke-width: 24px;
+}
+
+.checkbox:not(.checked)>ion-icon {
   color: var(--ios-bg-tertiary);
-  transition: all 0.15s ease-in-out;
 }
 
 /* TeamLabel ---------------------------------------- */
@@ -322,7 +309,7 @@
 }
 
 .button-inline.disabled {
-  color: var(--ios-text-tertiary);
+  color: var(--ios-text-tertiary) !important;
   pointer-events: none;
 }
 

@@ -61,9 +61,8 @@ export function useFunctions() {
     return { count, wins, losses, record, winPct };
   };
 
-  const updateGameMatches = async (gameId, newMatches) => {
+  const updateGameMatches = async (weekId, gameId, newMatches) => {
     const games = await getFirebase(refs.games());
-    const weekId = Object.keys(games).find(wId => games[wId][gameId]);
     const game = games[weekId][gameId];
     game.matches = newMatches;
 
@@ -75,7 +74,18 @@ export function useFunctions() {
     });
 
     console.log('updateGameMatches:', updates);
-    update(ref(db), updates);
+    update(ref(db), updates).then(() => {
+      console.log('updateGameMatches: success');
+    }).catch((error) => {
+      console.error('updateGameMatches: error', error);
+    });
+
+    // return new Promise((resolve) => {
+    //   setTimeout(() => {
+    //     console.log('updateGameMatches: success (test)');
+    //     resolve();
+    //   }, 5000);
+    // });
   };
 
   return {
@@ -101,6 +111,8 @@ export async function getFirebase(reference, transform) {
           return Object.values(data);
         }
         return transform(data);
+      } else {
+        return data;
       }
     }
     return null;
@@ -128,7 +140,8 @@ export function useLeaguePaths() {
 }
 
 function makePath(base, nodes) {
-  const ext = nodes.length > 0 ? `/${nodes.join('/')}` : '';
+  const parts = nodes.filter(n => n !== undefined && n !== null);
+  const ext = parts.length > 0 ? `/${parts.join('/')}` : '';
   return `${base}${ext}`;
 }
 

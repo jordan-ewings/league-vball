@@ -9,25 +9,31 @@ import {
   Row,
   Col,
   Alert,
+  Fade,
 } from 'react-bootstrap';
 
 import {
   TeamLabel,
   IconButton,
   CheckboxButton,
+  ButtonInline,
 } from '../common';
-import { db } from '../../firebase/firebase';
+
 
 /* ---------------------------------- */
 
 export default function GameItem({ game, readOnly }) {
 
   const refs = useLeaguePaths();
+  const { updateGameMatches } = useFunctions();
 
+  const [GID, setGID] = useState(game.id);
   const [formMatches, setFormMatches] = useState(null);
   const [form, setForm] = useState(false);
   const [pending, setPending] = useState(false);
   const [alert, setAlert] = useState(null);
+  const [showSave, setShowSave] = useState(false);
+  const [note, setNote] = useState(null);
 
   const teams = useMemo(() => game.teams, [game.teams]);
   const teamIds = useMemo(() => Object.keys(game.teams), [game.teams]);
@@ -35,22 +41,74 @@ export default function GameItem({ game, readOnly }) {
   const weekId = useMemo(() => game.week, [game.week]);
   const gameId = useMemo(() => game.id, [game.id]);
 
+  const matches = useFirebase(refs.games(weekId, gameId, 'matches'));
+
+  /* ---------------------------------- */
+  // calculated values
+
+  // cancelled games
+  const isCancelled = (m) => m.status == 'CNCL';
+  const getCancelled = (mData) => {
+    if (!mData) return [];
+    return Object.keys(mData).filter(mId => isCancelled(mData[mId]));
+  };
+
+  const someMatchesCancelled = getCancelled(matches).length > 0;
+  const someFormMatchesCancelled = getCancelled(formMatches).length > 0;
+
+  // get games that are not pre
+  const isNotPre = (m) => m.status != 'PRE';
+  const getNotPre = (mData) => {
+    if (!mData) return [];
+    return Object.keys(mData).filter(mId => isNotPre(mData[mId]));
+  };
+
+  const allMatchesPre = getNotPre(matches).length == 0;
+  const allFormMatchesPre = getNotPre(formMatches).length == 0;
+
+
+
+
+  /* ---------------------------------- */
+  // if game changes
+
+  if (GID != game.id) {
+    setGID(game.id);
+    setForm(false);
+    setFormMatches(null);
+    setPending(false);
+    setAlert(null);
+    setNote(null);
+  }
+
   /* ---------------------------------- */
   // matches listener
 
-  const matches = useFirebase(refs.games(weekId, gameId, 'matches'));
+
 
   const handleMatchUpdates = () => {
-    if (form && pending) {
-      setPending(false);
-      setForm(false);
+
+    if (form) {
+      if (pending) {
+        setPending(false);
+        setForm(false);
+        setFormMatches(null);
+      } else {
+        setFormMatches(copy(matches));
+        setAlert('Game updated by another user.');
+      }
     }
-    if (form && !pending) {
-      setFormMatches(JSON.parse(JSON.stringify(matches)));
-      setAlert('Game updated by another user.');
-    }
+    // setNote to either: Game 1 cancelled; Game 2 cancelled; Games cancelled
+    const cancelled = getCancelled(matches);
+    const c1 = cancelled.includes(matchIds[0]);
+    const c2 = cancelled.includes(matchIds[1]);
+    if (c1 && c2) setNote('Cancelled');
+    else if (c1) setNote('Game 1 cancelled');
+    else if (c2) setNote('Game 2 cancelled');
+    else setNote(null);
   };
 
+  // only run handleMatchUpdates when matches change and game is the same
   useEffect(() => {
     if (matches) handleMatchUpdates();
   }, [matches]);
@@ -76,12 +134,41 @@ export default function GameItem({ game, readOnly }) {
     if (!form) return;
     setFormMatches(prev => {
       const newMatches = { ...prev };
-      const match = newMatches[matchId];
-      match.status = (isCancelled) ? 'CNCL' : 'PRE';
-      delete match.winner;
+      if (matchId) {
+        const match = newMatches[matchId];
+        match.status = (isCancelled) ? 'CNCL' : 'PRE';
+        delete match.winner;
+      }
       return newMatches;
     });
+    setAlert(null);
+  }
 
+  const handleCancelAllMatches = () => {
+    if (!form) return;
+    setFormMatches(prev => {
+      const newMatches = { ...prev };
+      matchIds.forEach(mId => {
+        const match = newMatches[mId];
+        match.status = 'CNCL';
+        delete match.winner;
+      });
+      return newMatches;
+    });
+    setAlert(null);
+  }
+
+  const handleResetAllMatches = () => {
+    if (!form) return;
+    setFormMatches(prev => {
+      const newMatches = { ...prev };
+      matchIds.forEach(mId => {
+        const match = newMatches[mId];
+        match.status = 'PRE';
+        delete match.winner;
+      });
+      return newMatches;
+    });
     setAlert(null);
   }
 
@@ -92,65 +179,51 @@ export default function GameItem({ game, readOnly }) {
       setFormMatches(null);
     } else {
       setForm(true);
-      setFormMatches(JSON.parse(JSON.stringify(matches)));
+      setFormMatches(copy(matches));
     }
     setAlert(null);
   }
 
   // save button click
   const handleSave = async () => {
-
     setPending(true);
-    const updates = {};
-    const games = await getFirebase(refs.games(), data => {
-      data[weekId][gameId].matches = formMatches;
-      return data;
-    });
-
-    updates[refs.games(weekId, gameId, 'matches')] = formMatches;
-    teamIds.forEach(teamId => {
-      updates[refs.teams(teamId, 'stats', 'games')] = getStatsForTeam(games, teamId);
-      updates[refs.stats(weekId, teamId, 'games')] = getStatsForTeam(games, teamId, weekId);
-    });
-
-    console.log('updates:', updates);
-    update(ref(db), updates);
-    // await new Promise(resolve => setTimeout(resolve, 2000));
-    // handleMatchUpdates();
+    await updateGameMatches(weekId, gameId, formMatches);
   }
 
   /* ---------------------------------- */
   // render functions
 
   const renderMatchItem = (matchId, teamId) => {
-    if (!teamId) return renderCancelMatchItem(matchId);
     const match = (formMatches) ? formMatches[matchId] : (matches) ? matches[matchId] : null;
     const isWinner = (match && match.winner) ? match.winner == teamId : false;
+    const isEntered = (match && match.status) ? match.status != 'PRE' : false;
     return (
       <CheckboxButton
-        className="match-item result"
-        size={form ? '2.3rem' : '1.4rem'}
+        className={`match-item result ${isEntered ? 'entered' : ''}`}
         color="green"
-        filled={false}
         checked={isWinner}
-        disabled={!form}
+        disabled={!form || pending}
         onClick={() => handleTeamMatchItemClick(matchId, teamId, !isWinner)}
       />
     );
   };
 
   const renderCancelMatchItem = (matchId) => {
-    const match = (formMatches) ? formMatches[matchId] : (matches) ? matches[matchId] : null;
-    const isCancelled = (match && match.status) ? match.status == 'CNCL' : false;
+    const matchData = (formMatches) ? formMatches : (matches) ? matches : null;
+    const cancelled = getCancelled(matchData);
+    const isCancelled = cancelled.includes(matchId);
+    const noneCancelled = cancelled.length == 0;
+    // const match = (formMatches) ? formMatches[matchId] : (matches) ? matches[matchId] : null;
+    // const isCancelled = (match && match.status) ? match.status == 'CNCL' : false;
+    // const isEntered = (match && match.status) ? match.status != 'PRE' : false;
     return (
       <CheckboxButton
-        className="match-item cancel"
-        size={form ? '2.3rem' : '1.4rem'}
+        className={`match-item cancel ${noneCancelled ? 'none' : ''}`}
         color="red"
         xMark={true}
-        filled={false}
+        // filled={false}
         checked={isCancelled}
-        disabled={!form}
+        disabled={!form || pending}
         onClick={() => handleCancelMatchItemClick(matchId, !isCancelled)}
       />
     );
@@ -160,55 +233,106 @@ export default function GameItem({ game, readOnly }) {
   // return
 
   return (
-    <div className={`game-item ${form ? 'game-item-form' : ''}`}>
-      <div className="row g-0">
-        <div className={`main-col ${!readOnly ? 'col-8' : 'col-9'} `}>
-          {[...teamIds, null].map(teamId => (
-            <div key={teamId} className={`main-row ${teamId ? 'team-row' : 'cancel-row'}`}>
-              {teamId ? < TeamLabel team={teams[teamId]} withRecord /> :
-                <div className="team-label cancel-label">
-                  <span className="team-nbr"></span>
-                  <span className="team-name">Cancel</span>
-                </div>
-              }
-              <div className="matches-row">
+    <div className={`game-item ${form ? 'game-item-form' : ''} ${pending ? 'pending' : ''}`}>
+      <div className="hstack gap-2-alt align-items-start">
+
+        <div className="vstack gap-0 flex-grow-1 flex-shrink-1 overflow-hidden">
+          {teamIds.map(teamId => (
+            <div key={teamId} className="main-row team-row">
+              <TeamLabel team={teams[teamId]} withRecord />
+              <div className="hstack gap-1">
                 {renderMatchItem(matchIds[0], teamId)}
                 {renderMatchItem(matchIds[1], teamId)}
               </div>
             </div>
           ))}
-        </div>
-        <div className={`stat-col ${!readOnly ? 'col-4' : 'col-3'}`}>
-          <div className="info-col">
-            <div className="game-time">{game.time}</div>
-            <div className="game-court">Court {game.court}</div>
+          <div className="alt-row">
+            <Collapse in={!form && note}>
+              <div>
+                <span className="cancel-note">{note}</span>
+              </div>
+            </Collapse>
+            <Collapse in={form} onEntered={() => setShowSave(true)} onExit={() => setShowSave(false)}>
+              <div>
+                <div className="hstack justify-content-between">
+                  <div className="hstack gap-2 align-self-end">
+                    <ButtonInline
+                      text="Reset"
+                      className="reset-label"
+                      onClick={() => handleResetAllMatches()}
+                      disabled={getNotPre(formMatches).length == 0}
+                    />
+                    <div className="vr"></div>
+                    <ButtonInline
+                      text="Cancel"
+                      className="cancel-label"
+                      onClick={() => handleCancelAllMatches()}
+                      disabled={getCancelled(formMatches).length == 2}
+                    />
+                  </div>
+                  {/* <div className="hstack gap-1">
+                    {renderCancelMatchItem(matchIds[0])}
+                    {renderCancelMatchItem(matchIds[1])}
+                  </div> */}
+                </div>
+              </div>
+            </Collapse>
           </div>
-          <div className="edit-col">
-            <IconButton icon={form ? 'bi-x-lg' : 'bi-three-dots'} onClick={toggleForm} hide={readOnly} />
+          <div className="alert-row">
+            <Collapse in={alert}>
+              <div>
+                <Alert variant="danger" className="hstack gap-1 py-1 px-2 m-0 mt-2">
+                  <i className="bi bi-exclamation-triangle"></i>
+                  <span>{alert}</span>
+                </Alert>
+              </div>
+            </Collapse>
           </div>
         </div>
+
+        <div className="vr"></div>
+
+        <div className="vstack gap-1 flex-grow-0 flex-shrink-0">
+          <div className="hstack gap-2-alt">
+            <div className="vstack">
+              <div className="game-time">{game.time}</div>
+              <div className="game-court">Court {game.court}</div>
+            </div>
+            <div className="vstack justify-content-start">
+              <IconButton
+                icon={form ? 'bi-x-lg' : 'bi-three-dots-vertical'}
+                // color={form ? 'text-secondary' : null}
+                onClick={toggleForm}
+                hide={readOnly}
+              />
+            </div>
+          </div>
+          <div className="mt-auto">
+            <Fade in={showSave} timeout={50} mountOnEnter unmountOnExit>
+              <div>
+                <button className="btn btn-primary w-100" onClick={handleSave} disabled={!form || pending || isEqual(matches, formMatches)}>
+                  Submit
+                </button>
+              </div>
+            </Fade>
+          </div>
+        </div>
+
       </div>
-      <Collapse in={form}>
-        <div className="form-footer row g-0">
-          <div className="alert-col col-8">
-            <Alert variant="danger" show={alert}>
-              <i className="bi bi-exclamation-triangle"></i>
-              <span>{alert}</span>
-            </Alert>
-          </div>
-          <div className="save-col col-4">
-            <button className="btn w-100 btn-primary" onClick={handleSave} disabled={!form || JSON.stringify(matches) == JSON.stringify(formMatches)}>
-              Submit
-            </button>
-          </div>
-        </div>
-      </Collapse>
     </div>
-  )
+  );
 }
 
 /* ---------------------------------- */
 // helpers
+
+function copy(object) {
+  return JSON.parse(JSON.stringify(object));
+}
+
+function isEqual(obj1, obj2) {
+  return JSON.stringify(obj1) == JSON.stringify(obj2);
+}
 
 // function to convert games object to array
 function getGamesArray(games, teamId = null) {

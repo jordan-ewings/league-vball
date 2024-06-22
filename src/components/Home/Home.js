@@ -8,6 +8,8 @@ import LeagueSelect from './LeagueSelect';
 import AdminAccess from './AdminAccess';
 import TeamSelect from './TeamSelect';
 
+import './style.css';
+
 /* ---------------------------------- */
 
 export default function Home() {

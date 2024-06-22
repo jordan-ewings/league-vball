@@ -149,18 +149,37 @@ export function MenuItem({
 /* ---------------------------------- */
 // IconButton
 
-export function IconButton({ icon, bare = false, small = false, onClick, className = '', hide = false, disabled = false }) {
+// export function IconButton({ icon, bare = false, small = false, onClick, className = '', hide = false, disabled = false }) {
+//   if (hide) return null;
+//   let divClass = 'icon-button';
+//   if (className) divClass += ` ${className}`;
+//   if (bare) divClass += ' bare';
+//   if (small) divClass += ' small';
+//   if (disabled) divClass += ' disabled';
+//   // const divClass = `icon-button ${className} ${bare ? 'bare' : ''} ${small ? 'small' : ''} ${disabled ? 'disabled' : ''}`;
+//   return (
+//     <div className={divClass} role="button" onClick={onClick}>
+//       <i className={icon}></i>
+//       {/* <ion-icon name="checkmark-circle-outline"></ion-icon> */}
+//     </div>
+//   );
+// }
+
+export function IconButton({ icon, color, raised = true, onClick, hide = false, className }) {
+
   if (hide) return null;
-  let divClass = 'icon-button';
-  if (className) divClass += ` ${className}`;
-  if (bare) divClass += ' bare';
-  if (small) divClass += ' small';
-  if (disabled) divClass += ' disabled';
-  // const divClass = `icon-button ${className} ${bare ? 'bare' : ''} ${small ? 'small' : ''} ${disabled ? 'disabled' : ''}`;
+
+  let classNames = 'icon-button';
+  if (raised) classNames += ' raised';
+  if (className) classNames += ` ${className}`;
+
+  // get --ios-{color} from css
+  const style = {};
+  if (color) style.color = getComputedStyle(document.documentElement).getPropertyValue(`--ios-${color}`).trim();
+
   return (
-    <div className={divClass} role="button" onClick={onClick}>
-      <i className={icon}></i>
-      {/* <ion-icon name="checkmark-circle-outline"></ion-icon> */}
+    <div className={classNames} onClick={onClick} role="button">
+      <i className={icon} style={style}></i>
     </div>
   );
 }
@@ -168,13 +187,13 @@ export function IconButton({ icon, bare = false, small = false, onClick, classNa
 /* ---------------------------------- */
 // CheckboxButton
 
-export function CheckboxButton({ checked, disabled, size = '1.7rem', color = 'blue', filled = true, xMark = false, className = '', onClick }) {
+export function CheckboxButton({ checked, disabled, size, color = 'blue', filled = true, xMark = false, className = '', onClick }) {
 
   const handleClick = () => {
     if (onClick && !disabled) onClick();
   }
 
-  let classNames = 'checkbox-button';
+  let classNames = 'checkbox';
   if (checked) classNames += ' checked';
   if (disabled) classNames += ' disabled';
   if (filled) classNames += ' filled';
@@ -182,8 +201,9 @@ export function CheckboxButton({ checked, disabled, size = '1.7rem', color = 'bl
 
   // get --ios-{color} from css
   const compColor = getComputedStyle(document.documentElement).getPropertyValue(`--ios-${color}`).trim();
-  const style = { fontSize: size };
+  const style = {};
   if (checked) style.color = compColor;
+  if (size) style.fontSize = size;
 
   return (
     <div className={classNames} {...(!disabled && { role: 'button' })} onClick={handleClick}>
