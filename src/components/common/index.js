@@ -31,7 +31,7 @@ function stdChild(arg) {
 
 export function MainHeader({ children }) {
   return (
-    <div className={`main-header ${children ? 'mb-3 mt-1' : ''}`}>
+    <div className={`main-header`}>
       {children}
     </div>
   )

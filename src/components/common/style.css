@@ -22,6 +22,7 @@
   justify-content: center;
   align-items: center;
   min-width: 100%;
+  margin-bottom: 1rem;
 }
 
 .main-header.hidden {
@@ -56,7 +57,8 @@
 .cont-card {
   display: flex;
   flex-direction: column;
-  padding: 1rem 0;
+  /* padding-bottom: 2rem; */
+  margin-bottom: 2rem;
 }
 
 .cont-card-title,

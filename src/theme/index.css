@@ -137,6 +137,7 @@ div::-webkit-scrollbar {
 nav {
   z-index: 2000;
   transform: translateZ(0);
+  /* margin-bottom: .5rem; */
 }
 
 nav .navbar-nav {

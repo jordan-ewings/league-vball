@@ -14,7 +14,7 @@ import {
 } from '../common';
 import { db } from '../../firebase/firebase';
 
-import { IonButton, IonButtons, IonBackButton, IonHeader, IonContent, IonNavLink, IonToolbar, IonTitle } from '@ionic/react';
+// import { IonButton, IonButtons, IonBackButton, IonHeader, IonContent, IonNavLink, IonToolbar, IonTitle } from '@ionic/react';
 
 
 /* ---------------------------------- */
@@ -34,7 +34,11 @@ export default function WeekStats() {
   // toggle nav
   useEffect(() => {
     setNavHidden(true);
-    return () => setNavHidden(false);
+    window.scrollTo(0, 0);
+
+    return () => {
+      setNavHidden(false);
+    }
   }, []);
 
   /* ---------------------------------- */
@@ -92,7 +96,6 @@ export default function WeekStats() {
     <div id="week-stats-container">
       <MainHeader>
         <MainHeader.BackButton onClick={handleBack} />
-        <IonBackButton></IonBackButton>
         <MainHeader.Title text={weeks && weeks[weekId] ? weeks[weekId].label : 'Week'} />
         {controls && <MainHeader.SaveButton onClick={handleSave} disabled={Object.keys(updates).length == 0} />}
       </MainHeader>

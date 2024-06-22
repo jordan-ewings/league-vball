@@ -9,7 +9,7 @@ import { Container } from 'react-bootstrap'; // npm install react-bootstrap
 
 import { ContextProvider } from '../contexts/SessionContext';
 import Navbar from './Navbar';
-import Footer from './Footer';
+// import Footer from './Footer';
 
 import Home from './Home/Home';
 import Standings from './Standings/Standings';
@@ -56,7 +56,7 @@ export default function App() {
         <Container>
           <AnimatedRoutes />
         </Container>
-        <Footer />
+        {/* <Footer /> */}
       </ContextProvider>
     </Router>
   )
