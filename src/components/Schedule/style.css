@@ -84,6 +84,11 @@
   opacity: 1;
 }
 
+/* .game-item .vr.cancelled {
+  background-color: var(--ios-red);
+  width: 1px;
+} */
+
 
 /* ----- set columns ----- */
 
@@ -147,18 +152,21 @@
   font-size: .95rem;
 }
 
-.game-item .game-court {
+.game-item.post .game-time {
   color: var(--ios-text-secondary);
-  font-size: .95rem;
-  font-weight: 300;
 }
 
-.game-item-form .game-time,
+.game-item .game-court {
+  color: var(--ios-text-secondary);
+  font-size: .85rem;
+  /* font-weight: 300; */
+}
+
+/* .game-item-form .game-time,
 .game-item-form .game-court {
-  /* font-size: .85rem; */
   opacity: .5;
   transition: all 0.2s ease-in-out;
-}
+} */
 
 .game-item .team-label {
   flex-shrink: 1;
@@ -175,7 +183,7 @@
 
 .game-item .team-name {
   color: var(--ios-text-primary);
-  /* font-size: .95rem; */
+  font-size: .95rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -203,7 +211,7 @@
 .game-item .cancel-note {
   color: var(--ios-red);
   font-size: .8rem;
-  font-weight: 500;
+  font-weight: 400;
   column-gap: .4rem;
   /* padding-left: 1.5rem; */
   /* padding-top: .3rem; */
@@ -218,12 +226,16 @@
   color: transparent;
 }
 
+.game-item:not(.game-item-form) .match-item.cancel>* {
+  color: transparent !important;
+}
+
 .game-item .match-item.cancel.none>* {
   color: transparent;
 }
 
 .game-item .match-item>* {
-  font-size: 1.7rem;
+  font-size: 1.5rem;
   transition: all 0.1s ease-in-out;
 }
 
@@ -232,14 +244,14 @@
   transition: all 0.1s ease-in-out;
 }
 
-.game-item-form .match-item.cancel {
+/* .game-item-form .match-item.cancel {
   padding: .25rem;
 }
 
 .game-item-form .match-item.cancel>* {
   font-size: 1.7rem;
   transition: all 0.1s ease-in-out;
-}
+} */
 
 .game-item .match-item i.bi-circle {
   opacity: .25;

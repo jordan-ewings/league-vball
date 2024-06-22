@@ -32,7 +32,6 @@ export default function GameItem({ game, readOnly }) {
   const [form, setForm] = useState(false);
   const [pending, setPending] = useState(false);
   const [alert, setAlert] = useState(null);
-  const [showSave, setShowSave] = useState(false);
   const [note, setNote] = useState(null);
 
   const teams = useMemo(() => game.teams, [game.teams]);
@@ -53,21 +52,15 @@ export default function GameItem({ game, readOnly }) {
     return Object.keys(mData).filter(mId => isCancelled(mData[mId]));
   };
 
-  const someMatchesCancelled = getCancelled(matches).length > 0;
-  const someFormMatchesCancelled = getCancelled(formMatches).length > 0;
-
   // get games that are not pre
   const isNotPre = (m) => m.status != 'PRE';
   const getNotPre = (mData) => {
     if (!mData) return [];
     return Object.keys(mData).filter(mId => isNotPre(mData[mId]));
   };
+  const allMatchesEntered = getNotPre(matches).length == 2;
 
-  const allMatchesPre = getNotPre(matches).length == 0;
-  const allFormMatchesPre = getNotPre(formMatches).length == 0;
-
-
-
+  const saveDisabled = !form || pending || isEqual(matches, formMatches);
 
   /* ---------------------------------- */
   // if game changes
@@ -83,8 +76,6 @@ export default function GameItem({ game, readOnly }) {
 
   /* ---------------------------------- */
   // matches listener
-
-
 
   const handleMatchUpdates = () => {
 
@@ -112,6 +103,10 @@ export default function GameItem({ game, readOnly }) {
   useEffect(() => {
     if (matches) handleMatchUpdates();
   }, [matches]);
+
+  useEffect(() => {
+    console.log('formMatches:', formMatches);
+  }, [formMatches]);
 
   /* ---------------------------------- */
   // interaction handlers
@@ -187,7 +182,7 @@ export default function GameItem({ game, readOnly }) {
   // save button click
   const handleSave = async () => {
     setPending(true);
-    await updateGameMatches(weekId, gameId, formMatches);
+    updateGameMatches(weekId, gameId, formMatches);
   }
 
   /* ---------------------------------- */
@@ -213,15 +208,11 @@ export default function GameItem({ game, readOnly }) {
     const cancelled = getCancelled(matchData);
     const isCancelled = cancelled.includes(matchId);
     const noneCancelled = cancelled.length == 0;
-    // const match = (formMatches) ? formMatches[matchId] : (matches) ? matches[matchId] : null;
-    // const isCancelled = (match && match.status) ? match.status == 'CNCL' : false;
-    // const isEntered = (match && match.status) ? match.status != 'PRE' : false;
     return (
       <CheckboxButton
         className={`match-item cancel ${noneCancelled ? 'none' : ''}`}
         color="red"
         xMark={true}
-        // filled={false}
         checked={isCancelled}
         disabled={!form || pending}
         onClick={() => handleCancelMatchItemClick(matchId, !isCancelled)}
@@ -233,47 +224,35 @@ export default function GameItem({ game, readOnly }) {
   // return
 
   return (
-    <div className={`game-item ${form ? 'game-item-form' : ''} ${pending ? 'pending' : ''}`}>
+    <div className={`game-item ${form ? 'game-item-form' : ''} ${pending ? 'pending' : ''} ${allMatchesEntered ? 'post' : ''}`}>
       <div className="hstack gap-2-alt align-items-start">
 
         <div className="vstack gap-0 flex-grow-1 flex-shrink-1 overflow-hidden">
           {teamIds.map(teamId => (
             <div key={teamId} className="main-row team-row">
               <TeamLabel team={teams[teamId]} withRecord />
-              <div className="hstack gap-1">
+              <div className="hstack gap-0">
                 {renderMatchItem(matchIds[0], teamId)}
                 {renderMatchItem(matchIds[1], teamId)}
               </div>
             </div>
           ))}
           <div className="alt-row">
-            <Collapse in={!form && note}>
-              <div>
-                <span className="cancel-note">{note}</span>
-              </div>
-            </Collapse>
-            <Collapse in={form} onEntered={() => setShowSave(true)} onExit={() => setShowSave(false)}>
+            <Collapse in={form}>
               <div>
                 <div className="hstack justify-content-between">
-                  <div className="hstack gap-2 align-self-end">
-                    <ButtonInline
-                      text="Reset"
-                      className="reset-label"
-                      onClick={() => handleResetAllMatches()}
-                      disabled={getNotPre(formMatches).length == 0}
-                    />
-                    <div className="vr"></div>
+                  <div className="hstack gap-2">
                     <ButtonInline
                       text="Cancel"
                       className="cancel-label"
                       onClick={() => handleCancelAllMatches()}
-                      disabled={getCancelled(formMatches).length == 2}
+                      disabled={!form || pending || getCancelled(formMatches).length == 2}
                     />
                   </div>
-                  {/* <div className="hstack gap-1">
+                  <div className="hstack gap-0">
                     {renderCancelMatchItem(matchIds[0])}
                     {renderCancelMatchItem(matchIds[1])}
-                  </div> */}
+                  </div>
                 </div>
               </div>
             </Collapse>
@@ -292,7 +271,7 @@ export default function GameItem({ game, readOnly }) {
 
         <div className="vr"></div>
 
-        <div className="vstack gap-1 flex-grow-0 flex-shrink-0">
+        <div className={`vstack gap-0 flex-grow-0 flex-shrink-0 ps-1 ${readOnly ? 'pe-2' : ''}`}>
           <div className="hstack gap-2-alt">
             <div className="vstack">
               <div className="game-time">{game.time}</div>
@@ -300,21 +279,29 @@ export default function GameItem({ game, readOnly }) {
             </div>
             <div className="vstack justify-content-start">
               <IconButton
-                icon={form ? 'bi-x-lg' : 'bi-three-dots-vertical'}
-                // color={form ? 'text-secondary' : null}
+                icon={form ? 'bi-x-lg' : 'bi-three-dots'}
                 onClick={toggleForm}
                 hide={readOnly}
               />
             </div>
           </div>
           <div className="mt-auto">
-            <Fade in={showSave} timeout={50} mountOnEnter unmountOnExit>
+            <Collapse in={!form}>
               <div>
-                <button className="btn btn-primary w-100" onClick={handleSave} disabled={!form || pending || isEqual(matches, formMatches)}>
+                <span className="cancel-note">{note}</span>
+              </div>
+            </Collapse>
+            <Collapse in={form}>
+              <div>
+                <button
+                  className={`btn w-100 ${saveDisabled ? 'btn-outline-primary' : 'btn-primary'}`}
+                  onClick={handleSave}
+                  disabled={saveDisabled}
+                >
                   Submit
                 </button>
               </div>
-            </Fade>
+            </Collapse>
           </div>
         </div>
 
