@@ -286,7 +286,7 @@ function TeamMatchItem({ match, teamId, disabled = false, onChange }) {
 
 function CancelMatchItem({ match, disabled = false, onChange }) {
 
-  if (!match) return <CheckboxButton className="match-item result" checked={false} disabled={true} />;
+  if (!match) return <CheckboxButton className="match-item cancel" checked={false} disabled={true} />;
 
   return match && (
     <CheckboxButton
