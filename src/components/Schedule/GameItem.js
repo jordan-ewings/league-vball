@@ -59,28 +59,36 @@ export default function GameItem({ game, readOnly }) {
   /* ---------------------------------- */
   // if game changes
 
-  if (GID != game.id) {
-    setGID(game.id);
-    setForm(false);
-    setFormMatches(null);
-    setPending(false);
-    setAlert(null);
-    setNote(null);
-  }
+  // if (GID != game.id) {
+  //   setGID(game.id);
+  //   setForm(false);
+  //   setFormMatches(null);
+  //   setPending(false);
+  //   setAlert(null);
+  //   setNote(null);
+  // }
 
   /* ---------------------------------- */
   // matches listener
 
   const handleMatchUpdates = () => {
-    if (form) {
-      if (pending) {
-        setPending(false);
-        setForm(false);
-        setFormMatches(null);
-      } else {
-        setFormMatches(copy(matches));
-        setAlert('Game updated by another user.');
+    if (GID == game.id) {
+      if (form) {
+        if (pending) {
+          setPending(false);
+          setForm(false);
+          setFormMatches(null);
+        } else {
+          setFormMatches(copy(matches));
+          setAlert('Game updated by another user.');
+        }
       }
+    } else {
+      setGID(game.id);
+      setForm(false);
+      setFormMatches(null);
+      setPending(false);
+      setAlert(null);
     }
 
     const cancelled = getCancelled(matches);
@@ -256,7 +264,9 @@ export default function GameItem({ game, readOnly }) {
 
 function TeamMatchItem({ match, teamId, disabled = false, onChange }) {
 
-  return match && (
+  if (!match) return <CheckboxButton className="match-item result" checked={false} disabled={true} />;
+
+  return (
     <CheckboxButton
       className={`match-item result ${match.status != 'PRE' ? 'entered' : ''}`}
       color="green"
@@ -275,6 +285,8 @@ function TeamMatchItem({ match, teamId, disabled = false, onChange }) {
 }
 
 function CancelMatchItem({ match, disabled = false, onChange }) {
+
+  if (!match) return <CheckboxButton className="match-item result" checked={false} disabled={true} />;
 
   return match && (
     <CheckboxButton
