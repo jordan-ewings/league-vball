@@ -29,26 +29,7 @@ export default function WeekGames({ weekId }) {
       ))}
     </div>
   );
-
-  // return (
-  //   <div className="week-games">
-  //     {gamesByTime && Object.entries(gamesByTime).map(([time, games]) => (
-  //       <ContCard key={time} className="game-group">
-  //         {games.map((game, index) => (
-  //           <React.Fragment key={game.id}>
-  //             <GameItem game={game} />
-  //             {index < games.length - 1 && <div className="game-separator"></div>}
-  //           </React.Fragment>
-  //         ))}
-  //       </ContCard>
-  //     ))}
-  //   </div>
-  // );
 }
-
-/* ---------------------------------- */
-
-// function GameGroup
 
 /* ---------------------------------- */
 

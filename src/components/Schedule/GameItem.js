@@ -1,15 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback, memo, useRef, createRef } from 'react';
-import { useAuth, useLeague, useOptions } from '../../contexts/SessionContext';
-import { useFirebase, getFirebase, useLeaguePaths, useFunctions } from '../../firebase/useFirebase';
-import { get, child, ref, onValue, off, set, update, runTransaction } from "firebase/database";
+import { useFirebase, useLeaguePaths, useFunctions } from '../../firebase/useFirebase';
 import {
-  Container,
   Collapse,
-  Stack,
-  Row,
-  Col,
   Alert,
-  Fade,
 } from 'react-bootstrap';
 
 import {
@@ -18,7 +11,6 @@ import {
   CheckboxButton,
   ButtonInline,
 } from '../common';
-
 
 /* ---------------------------------- */
 
@@ -34,11 +26,11 @@ export default function GameItem({ game, readOnly }) {
   const [alert, setAlert] = useState(null);
   const [note, setNote] = useState(null);
 
-  const teams = useMemo(() => game.teams, [game.teams]);
-  const teamIds = useMemo(() => Object.keys(game.teams), [game.teams]);
-  const matchIds = useMemo(() => Object.keys(game.matches), [game.matches]);
-  const weekId = useMemo(() => game.week, [game.week]);
-  const gameId = useMemo(() => game.id, [game.id]);
+  const teams = game.teams;
+  const teamIds = Object.keys(game.teams);
+  const matchIds = Object.keys(game.matches);
+  const weekId = game.week;
+  const gameId = game.id;
 
   const matches = useFirebase(refs.games(weekId, gameId, 'matches'));
 
@@ -52,17 +44,17 @@ export default function GameItem({ game, readOnly }) {
     return Object.keys(mData).filter(mId => isCancelled(mData[mId]));
   };
 
-  const allCancelled = getCancelled(matches).length == 2;
-
   // get games that are not pre
   const isNotPre = (m) => m.status != 'PRE';
   const getNotPre = (mData) => {
     if (!mData) return [];
     return Object.keys(mData).filter(mId => isNotPre(mData[mId]));
   };
-  const allMatchesEntered = getNotPre(matches).length == 2;
 
+  const allCancelled = getCancelled(matches).length == 2;
+  const allMatchesEntered = getNotPre(matches).length == 2;
   const saveDisabled = !form || pending || isEqual(matches, formMatches);
+  const matchItemsDisabled = !form || pending;
 
   /* ---------------------------------- */
   // if game changes
@@ -80,7 +72,6 @@ export default function GameItem({ game, readOnly }) {
   // matches listener
 
   const handleMatchUpdates = () => {
-
     if (form) {
       if (pending) {
         setPending(false);
@@ -91,55 +82,29 @@ export default function GameItem({ game, readOnly }) {
         setAlert('Game updated by another user.');
       }
     }
-    // setNote to either: Game 1 cancelled; Game 2 cancelled; Games cancelled
+
     const cancelled = getCancelled(matches);
     const c1 = cancelled.includes(matchIds[0]);
     const c2 = cancelled.includes(matchIds[1]);
-    if (c1 && c2) setNote('Cancelled');
-    else if (c1) setNote('Game 1 cancelled');
-    else if (c2) setNote('Game 2 cancelled');
+    if (c1 && !c2) setNote('Game 1 cancelled');
+    else if (!c1 && c2) setNote('Game 2 cancelled');
     else setNote(null);
   };
 
-  // only run handleMatchUpdates when matches change and game is the same
   useEffect(() => {
-    if (matches) handleMatchUpdates();
+    if (matches) {
+      handleMatchUpdates();
+    }
   }, [matches]);
 
   useEffect(() => {
-    console.log('formMatches:', formMatches);
+    if (formMatches) {
+      console.log('formMatches:', formMatches);
+    }
   }, [formMatches]);
 
   /* ---------------------------------- */
   // interaction handlers
-
-  const handleTeamMatchItemClick = (matchId, teamId, isWinner) => {
-    if (!form) return;
-    setFormMatches(prev => {
-      const newMatches = { ...prev };
-      const match = newMatches[matchId];
-      match.status = (isWinner) ? 'POST' : 'PRE';
-      match.winner = (isWinner) ? teamId : null;
-      if (!isWinner) delete match.winner;
-      return newMatches;
-    });
-
-    setAlert(null);
-  }
-
-  const handleCancelMatchItemClick = (matchId, isCancelled) => {
-    if (!form) return;
-    setFormMatches(prev => {
-      const newMatches = { ...prev };
-      if (matchId) {
-        const match = newMatches[matchId];
-        match.status = (isCancelled) ? 'CNCL' : 'PRE';
-        delete match.winner;
-      }
-      return newMatches;
-    });
-    setAlert(null);
-  }
 
   const handleCancelAllMatches = () => {
     if (!form) return;
@@ -155,15 +120,10 @@ export default function GameItem({ game, readOnly }) {
     setAlert(null);
   }
 
-  const handleResetAllMatches = () => {
-    if (!form) return;
+  const updateFormMatches = (matchId, newMatch) => {
     setFormMatches(prev => {
-      const newMatches = { ...prev };
-      matchIds.forEach(mId => {
-        const match = newMatches[mId];
-        match.status = 'PRE';
-        delete match.winner;
-      });
+      const newMatches = copy(prev);
+      newMatches[matchId] = newMatch;
       return newMatches;
     });
     setAlert(null);
@@ -184,43 +144,38 @@ export default function GameItem({ game, readOnly }) {
   // save button click
   const handleSave = async () => {
     setPending(true);
-    updateGameMatches(weekId, gameId, formMatches);
+
+    const isPost = (m) => m.status == 'POST';
+    const bothPost = (m1, m2) => isPost(m1) && isPost(m2);
+    const diffWinner = (m1, m2) => m1.winner != m2.winner;
+
+    // determine if records need to be updated
+    let updateRecords = false;
+    matchIds.forEach(mId => {
+      const m = matches[mId];
+      const mForm = formMatches[mId];
+      if (bothPost(m, mForm) === true) {
+        if (diffWinner(m, mForm) === true) {
+          updateRecords = true;
+        }
+      } else if (isPost(m) === true || isPost(mForm) === true) {
+        updateRecords = true;
+        return;
+      } else {
+        return;
+      }
+    });
+
+    console.log('updateRecords:', updateRecords);
+    updateGameMatches(weekId, gameId, formMatches, updateRecords);
   }
 
   /* ---------------------------------- */
   // render functions
 
-  const renderMatchItem = (matchId, teamId) => {
-    const match = (formMatches) ? formMatches[matchId] : (matches) ? matches[matchId] : null;
-    const isWinner = (match && match.winner) ? match.winner == teamId : false;
-    const isEntered = (match && match.status) ? match.status != 'PRE' : false;
-    return (
-      <CheckboxButton
-        className={`match-item result ${isEntered ? 'entered' : ''}`}
-        color="green"
-        checked={isWinner}
-        disabled={!form || pending}
-        onClick={() => handleTeamMatchItemClick(matchId, teamId, !isWinner)}
-      />
-    );
-  };
-
-  const renderCancelMatchItem = (matchId) => {
-    const matchData = (formMatches) ? formMatches : (matches) ? matches : null;
-    const cancelled = getCancelled(matchData);
-    const isCancelled = cancelled.includes(matchId);
-    const noneCancelled = cancelled.length == 0;
-    return (
-      <CheckboxButton
-        className={`match-item cancel ${noneCancelled ? 'none' : ''}`}
-        color="red"
-        xMark={true}
-        checked={isCancelled}
-        disabled={!form || pending}
-        onClick={() => handleCancelMatchItemClick(matchId, !isCancelled)}
-      />
-    );
-  };
+  const getMatch = (matchId) => {
+    return (formMatches) ? formMatches[matchId] : (matches) ? matches[matchId] : null;
+  }
 
   /* ---------------------------------- */
   // return
@@ -229,43 +184,34 @@ export default function GameItem({ game, readOnly }) {
     <div className={`game-item ${form ? 'game-item-form' : ''} ${pending ? 'pending' : ''} ${allMatchesEntered ? 'post' : ''}`}>
       <div className="hstack gap-2-alt align-items-start">
 
-        <div className="vstack gap-0 flex-grow-1 flex-shrink-1 overflow-hidden">
+        <div className="vstack flex-grow-1 flex-shrink-1 overflow-hidden">
           {teamIds.map(teamId => (
             <div key={teamId} className="main-row team-row">
               <TeamLabel team={teams[teamId]} withRecord />
-              <div className="hstack gap-0">
-                {renderMatchItem(matchIds[0], teamId)}
-                {renderMatchItem(matchIds[1], teamId)}
+              <div className="hstack">
+                <TeamMatchItem match={getMatch(matchIds[0])} teamId={teamId} disabled={matchItemsDisabled} onChange={newMatch => updateFormMatches(matchIds[0], newMatch)} />
+                <TeamMatchItem match={getMatch(matchIds[1])} teamId={teamId} disabled={matchItemsDisabled} onChange={newMatch => updateFormMatches(matchIds[1], newMatch)} />
               </div>
             </div>
           ))}
-          <div className="alt-row">
-            <Collapse in={!form && !allCancelled}>
-              <div>
-                <span className="cancel-note">{note}</span>
-              </div>
+          <div className={`alt-row ${getCancelled(formMatches).length == 0 ? 'none' : ''}`}>
+            <Collapse in={!form}>
+              <div><span className="cancel-note">{note}</span></div>
             </Collapse>
             <Collapse in={form}>
               <div>
                 <div className="hstack justify-content-between">
-                  <div className="hstack gap-2">
-                    <ButtonInline
-                      text="Cancel All"
-                      className="cancel-label"
-                      onClick={() => handleCancelAllMatches()}
-                      disabled={!form || pending || getCancelled(formMatches).length == 2}
-                    />
-                  </div>
-                  <div className="hstack gap-0">
-                    {renderCancelMatchItem(matchIds[0])}
-                    {renderCancelMatchItem(matchIds[1])}
+                  <ButtonInline text="Cancel All" className="cancel-label" onClick={() => handleCancelAllMatches()} disabled={!form || pending || getCancelled(formMatches).length == 2} />
+                  <div className="hstack">
+                    <CancelMatchItem match={getMatch(matchIds[0])} disabled={matchItemsDisabled} onChange={newMatch => updateFormMatches(matchIds[0], newMatch)} />
+                    <CancelMatchItem match={getMatch(matchIds[1])} disabled={matchItemsDisabled} onChange={newMatch => updateFormMatches(matchIds[1], newMatch)} />
                   </div>
                 </div>
               </div>
             </Collapse>
           </div>
           <div className="alert-row">
-            <Collapse in={alert}>
+            <Collapse in={alert != null}>
               <div>
                 <Alert variant="danger" className="hstack gap-1 py-1 px-2 m-0 mt-2">
                   <i className="bi bi-exclamation-triangle"></i>
@@ -278,33 +224,20 @@ export default function GameItem({ game, readOnly }) {
 
         <div className={`vr ${!form && allCancelled ? 'cancelled' : ''}`}></div>
 
-        <div className={`vstack gap-0 flex-grow-0 flex-shrink-0 ps-1 ${readOnly ? 'pe-2' : ''}`}>
+        <div className={`vstack flex-grow-0 flex-shrink-0 ps-1 ${readOnly ? 'pe-2' : ''}`}>
           <div className="hstack gap-2-alt">
             <div className="vstack">
               <div className="game-time">{game.time}</div>
               <div className="game-court">Court {game.court}</div>
             </div>
             <div className="vstack justify-content-start">
-              <IconButton
-                icon={form ? 'bi-x-lg' : 'bi-three-dots'}
-                onClick={toggleForm}
-                hide={readOnly}
-              />
+              <IconButton icon={form ? 'bi-x-lg' : 'bi-three-dots'} onClick={toggleForm} hide={readOnly} />
             </div>
           </div>
           <div className="mt-auto">
-            {/* <Collapse in={!form}>
-              <div>
-                <span className="cancel-note">{note}</span>
-              </div>
-            </Collapse> */}
             <Collapse in={form && !saveDisabled}>
               <div>
-                <button
-                  className={`btn w-100 btn-primary`}
-                  onClick={handleSave}
-                  disabled={saveDisabled}
-                >
+                <button className={`btn w-100 btn-primary`} onClick={handleSave} disabled={saveDisabled}>
                   Submit
                 </button>
               </div>
@@ -314,6 +247,50 @@ export default function GameItem({ game, readOnly }) {
 
       </div>
     </div>
+  );
+}
+
+/* ---------------------------------- */
+// team match item
+// on click, returns the updated match object (if not disabled)
+
+function TeamMatchItem({ match, teamId, disabled = false, onChange }) {
+
+  return match && (
+    <CheckboxButton
+      className={`match-item result ${match.status != 'PRE' ? 'entered' : ''}`}
+      color="green"
+      checked={match.winner == teamId}
+      disabled={disabled}
+      onClick={() => {
+        if (disabled) return;
+        const newMatch = copy(match);
+        newMatch.status = (newMatch.winner == teamId) ? 'PRE' : 'POST';
+        newMatch.winner = (newMatch.winner == teamId) ? null : teamId;
+        if (!newMatch.winner) delete newMatch.winner;
+        onChange(newMatch);
+      }}
+    />
+  );
+}
+
+function CancelMatchItem({ match, disabled = false, onChange }) {
+
+  return match && (
+    <CheckboxButton
+      className={`match-item cancel`}
+      color="red"
+      xMark={true}
+      checked={match.status == 'CNCL'}
+      disabled={disabled}
+      onClick={() => {
+        if (disabled) return;
+        const newMatch = copy(match);
+        newMatch.status = (newMatch.status == 'CNCL') ? 'PRE' : 'CNCL';
+        delete newMatch.winner;
+        onChange(newMatch);
+      }}
+    />
   );
 }
 
@@ -328,46 +305,46 @@ function isEqual(obj1, obj2) {
   return JSON.stringify(obj1) == JSON.stringify(obj2);
 }
 
-// function to convert games object to array
-function getGamesArray(games, teamId = null) {
-  const result = [];
-  Object.keys(games).forEach(wId => {
-    Object.keys(games[wId]).forEach(gId => {
-      const game = games[wId][gId];
-      if (teamId && !game.teams[teamId]) return;
-      result.push({ weekKey: wId, gameKey: gId, ...game });
-    });
-  });
-  return result;
-}
+// // function to convert games object to array
+// function getGamesArray(games, teamId = null) {
+//   const result = [];
+//   Object.keys(games).forEach(wId => {
+//     Object.keys(games[wId]).forEach(gId => {
+//       const game = games[wId][gId];
+//       if (teamId && !game.teams[teamId]) return;
+//       result.push({ weekKey: wId, gameKey: gId, ...game });
+//     });
+//   });
+//   return result;
+// }
 
-// function to get a team's completed matches
-function getMatchesArray(games, teamId = null) {
-  const result = [];
-  const gamesArray = getGamesArray(games, teamId);
-  gamesArray.forEach(game => {
-    Object.keys(game.matches).forEach(mId => {
-      const match = game.matches[mId];
-      if (match.status != 'POST') return;
-      const item = { matchKey: mId, ...match, ...game };
-      delete item.matches;
-      result.push(item);
-    });
-  });
-  return result;
-}
+// // function to get a team's completed matches
+// function getMatchesArray(games, teamId = null) {
+//   const result = [];
+//   const gamesArray = getGamesArray(games, teamId);
+//   gamesArray.forEach(game => {
+//     Object.keys(game.matches).forEach(mId => {
+//       const match = game.matches[mId];
+//       if (match.status != 'POST') return;
+//       const item = { matchKey: mId, ...match, ...game };
+//       delete item.matches;
+//       result.push(item);
+//     });
+//   });
+//   return result;
+// }
 
-// function to get a team's stats, overall or for a week
-function getStatsForTeam(games, teamId, weekId = null) {
-  if (!teamId) return null;
-  const result = { count: 0, wins: 0, losses: 0, record: '0-0', winPct: 0 };
-  const matches = getMatchesArray(games, teamId).filter(m => !weekId || m.weekKey == weekId);
-  matches.forEach(m => {
-    result.count++;
-    result.wins += (m.winner == teamId) ? 1 : 0;
-    result.losses += (m.winner != teamId) ? 1 : 0;
-    result.record = `${result.wins}-${result.losses}`;
-    result.winPct = result.wins / result.count;
-  });
-  return result;
-}
+// // function to get a team's stats, overall or for a week
+// function getStatsForTeam(games, teamId, weekId = null) {
+//   if (!teamId) return null;
+//   const result = { count: 0, wins: 0, losses: 0, record: '0-0', winPct: 0 };
+//   const matches = getMatchesArray(games, teamId).filter(m => !weekId || m.weekKey == weekId);
+//   matches.forEach(m => {
+//     result.count++;
+//     result.wins += (m.winner == teamId) ? 1 : 0;
+//     result.losses += (m.winner != teamId) ? 1 : 0;
+//     result.record = `${result.wins}-${result.losses}`;
+//     result.winPct = result.wins / result.count;
+//   });
+//   return result;
+// }

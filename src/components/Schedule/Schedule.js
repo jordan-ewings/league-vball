@@ -23,15 +23,9 @@ export default function Schedule() {
     }
   }, [currentWeek]);
 
-  // scroll to main header
-  // useLayoutEffect(() => {
-  //   const header = headerRef.current;
-  //   if (header && !isPlatform('desktop')) {
-  //     header.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  //   }
-  // }, [activeWeek]);
+  if (!activeWeek) return <SpinnerBlock align="center" size="3rem" />;
 
-  return !activeWeek ? <SpinnerBlock align="center" size="3rem" /> : (
+  return (
     <div className="page">
       <MainHeader>
         <WeekButtons activeWeek={activeWeek} setActiveWeek={setActiveWeek} />

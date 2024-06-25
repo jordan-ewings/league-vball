@@ -2,56 +2,36 @@
 // Schedule
 
 import React, { useState, useEffect, useMemo, useCallback, memo, useRef, useLayoutEffect } from 'react';
+import { Button, ButtonGroup } from 'react-bootstrap';
 import { useFirebase, useFirebaseCache } from '../../firebase/useFirebase';
-import {
-  MainHeader,
-  ContCard,
-  Spinner,
-} from '../common';
 
 /* ---------------------------------- */
 
 export default function WeekButtons({ activeWeek, setActiveWeek }) {
 
   const weeks = useFirebaseCache('weeks', (raw) => Object.values(raw));
-  const activeButtonRef = useRef(null);
+  const formatDate = (str) => new Date(str).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
   useLayoutEffect(() => {
-    const activeButton = activeButtonRef.current;
+    const activeButton = document.querySelector('.week-filter-btn.active');
     if (activeButton) {
       activeButton.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     }
   }, [activeWeek, weeks]);
 
-  const formatDate = (str) => new Date(str).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-
   /* -------------------- */
   // render
 
-  if (!weeks) {
-    return (
-      <div className="d-flex justify-content-center">
-
-      </div>
-    );
-  }
-
   return (
     <div className="week-filter">
-      <div className="week-filter-btn-group btn-group" role="group">
-        {weeks.map(({ id, label, gameday }) => (
-          <button
-            key={id}
-            ref={id == activeWeek ? activeButtonRef : null}
-            className={`btn week-filter-btn ${id == activeWeek ? 'active' : ''}`}
-            type="button"
-            onClick={() => setActiveWeek(id)}
-          >
+      <ButtonGroup className="week-filter-btn-group">
+        {weeks && weeks.map(({ id, label, gameday }) => (
+          <Button key={id} className="week-filter-btn" variant={null} active={id == activeWeek} onClick={() => setActiveWeek(id)}>
             <span className="week-btn-label">{label}</span>
             <span className="week-btn-date">{formatDate(gameday)}</span>
-          </button>
+          </Button>
         ))}
-      </div>
+      </ButtonGroup>
     </div>
   );
 }

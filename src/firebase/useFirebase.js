@@ -23,18 +23,7 @@ export function initFirebaseStore() {
 }
 
 /* ---------------------------------- */
-// useFirebase collection of hooks
-
-// export const useFirebaseTools = {
-//   useFirebaseCache: useFirebaseCache,
-//   useFirebase: useFirebase,
-//   useLeaguePaths: useLeaguePaths,
-
-
-
-/* ---------------------------------- */
 // useFunctions
-// misc methods/function to be performed on each data nodes
 
 export function useFunctions() {
 
@@ -71,13 +60,23 @@ export function useFunctions() {
     return { count, wins, losses, record, winPct };
   };
 
-  const updateGameMatches = async (weekId, gameId, newMatches) => {
-    const games = await getFirebase(refs.games());
-    const game = games[weekId][gameId];
-    game.matches = newMatches;
+  const updateGameMatches = async (weekId, gameId, newMatches, updateRecords = true) => {
 
     const updates = {};
     updates[refs.games(weekId, gameId, 'matches')] = newMatches;
+
+    if (updateRecords === false) {
+      console.log('updateGameMatches:', updates);
+      return update(ref(db), updates).then(() => {
+        console.log('updateGameMatches: success');
+      }).catch((error) => {
+        console.error('updateGameMatches: error', error);
+      });
+    }
+
+    const games = await getFirebase(refs.games());
+    const game = games[weekId][gameId];
+    game.matches = newMatches;
     Object.keys(game.teams).forEach(teamId => {
       updates[refs.teams(teamId, 'stats', 'games')] = teamStatsFromGames(games, teamId);
       updates[refs.stats(weekId, teamId, 'games')] = teamStatsFromGames(games, teamId, weekId);
@@ -89,13 +88,6 @@ export function useFunctions() {
     }).catch((error) => {
       console.error('updateGameMatches: error', error);
     });
-
-    // return new Promise((resolve) => {
-    //   setTimeout(() => {
-    //     console.log('updateGameMatches: success (test)');
-    //     resolve();
-    //   }, 5000);
-    // });
   };
 
   return {
@@ -106,10 +98,7 @@ export function useFunctions() {
 }
 
 /* ---------------------------------- */
-// useFirebaseOnce
-// transform is either:
-// - a function to transform the data
-// - 'array', indicating the data should be transformed into an array
+// getFirebase
 
 export async function getFirebase(reference, transform) {
 
@@ -147,12 +136,6 @@ export function useLeaguePaths() {
   }, [leagueId]);
 
   return paths;
-}
-
-function makePath(base, nodes) {
-  const parts = nodes.filter(n => n !== undefined && n !== null);
-  const ext = parts.length > 0 ? `/${parts.join('/')}` : '';
-  return `${base}${ext}`;
 }
 
 /* ---------------------------------- */
@@ -203,34 +186,6 @@ function _useFirebaseCache(reference) {
   return data;
 }
 
-function readStore(reference) {
-  if (store.has(reference)) {
-    return store.get(reference);
-  }
-  return null;
-}
-
-function readCache(reference) {
-  if (cache.has(reference)) {
-    return cache.get(reference);
-  }
-  return null;
-}
-
-/* ---------------------------------- */
-// checkers
-
-function parseReference(reference, leagueId) {
-  if (!reference) return null;
-  if (!leagueId) return null;
-
-  if (reference.includes(leagueId)) return reference;
-  if (reference.includes('/')) {
-    return reference.replace('/', `/${leagueId}/`);
-  }
-  return `${reference}/${leagueId}`;
-}
-
 /* ---------------------------------- */
 // useFirebase
 
@@ -268,7 +223,6 @@ function initReference(reference) {
   onValue(dataRef, (snapshot) => {
     const data = snapshot.val();
     store.set(reference, data);
-    // console.log(`store ${reference}:`, data);
     if (subscribers.has(reference)) {
       subscribers.get(reference).forEach((cb) => cb());
     }
@@ -300,4 +254,35 @@ function getSnapshot(reference) {
 }
 
 /* ---------------------------------- */
+// helpers
 
+function readStore(reference) {
+  if (store.has(reference)) {
+    return store.get(reference);
+  }
+  return null;
+}
+
+function readCache(reference) {
+  if (cache.has(reference)) {
+    return cache.get(reference);
+  }
+  return null;
+}
+
+function parseReference(reference, leagueId) {
+  if (!reference) return null;
+  if (!leagueId) return null;
+
+  if (reference.includes(leagueId)) return reference;
+  if (reference.includes('/')) {
+    return reference.replace('/', `/${leagueId}/`);
+  }
+  return `${reference}/${leagueId}`;
+}
+
+function makePath(base, nodes) {
+  const parts = nodes.filter(n => n !== undefined && n !== null);
+  const ext = parts.length > 0 ? `/${parts.join('/')}` : '';
+  return `${base}${ext}`;
+}

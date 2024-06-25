@@ -118,13 +118,6 @@ function LeagueProvider({ children }) {
     }
   }, [leagueId]);
 
-  // useEffect(() => {
-  //   if (leagueId) {
-  //     Storage.set('leagueId', leagueId);
-  //     initFirebaseStore();
-  //   }
-  // }, [leagueId]);
-
   const value = useMemo(() => ({
     leagues,
     leagueId,

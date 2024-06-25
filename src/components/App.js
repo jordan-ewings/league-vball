@@ -1,15 +1,12 @@
 /* ---------------------------------- */
 // app
 
-import React, { useState, useEffect, useRef, createRef } from 'react'; // npm install react
-import { HashRouter as Router, Routes, Route, useLocation, useOutlet, createHashRouter, RouterProvider } from 'react-router-dom'; // npm install react-router-dom
-import { createRoot } from 'react-dom/client';
-import { TransitionGroup, CSSTransition, SwitchTransition } from 'react-transition-group'; // npm install react-transition-group
-import { Container, NavLink } from 'react-bootstrap'; // npm install react-bootstrap
+import React from 'react'; // npm install react
+import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom'; // npm install react-router-dom
+import { CSSTransition, SwitchTransition } from 'react-transition-group'; // npm install react-transition-group
+
 import { ContextProvider } from '../contexts/SessionContext';
 import Navbar from './Navbar';
-// import Footer from './Footer';
-
 import Home from './Home/Home';
 import Standings from './Standings/Standings';
 import Stats from './Stats/Stats';
@@ -55,9 +52,7 @@ export default function App() {
     <Router>
       <ContextProvider>
         <Navbar />
-        {/* <Container> */}
         <AnimatedRoutes />
-        {/* </Container> */}
       </ContextProvider>
     </Router>
   )
