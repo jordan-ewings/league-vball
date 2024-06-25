@@ -138,10 +138,9 @@ div::-webkit-scrollbar {
 
 nav {
   /* z-index: 2000; */
-  /* transform: translateZ(0); */
-  z-index: 1050 !important;
+  transform: translateZ(0);
+  z-index: 1060 !important;
   background-color: var(--ios-bg-primary);
-  /* border-bottom: .8px solid var(--ios-material-ultrathin); */
 }
 
 .navbar-scrolled {
@@ -201,6 +200,23 @@ nav.hidden {
   display: none;
 
 }
+
+.main-body:only-child {
+  margin-top: 1rem;
+}
+
+/* .page {
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  position: absolute;
+  flex-direction: column;
+  justify-content: space-between;
+  contain: layout size style;
+  z-index: 0
+} */
 
 /* ---------------------------------- */
 

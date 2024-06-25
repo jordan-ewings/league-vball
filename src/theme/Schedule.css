@@ -135,10 +135,6 @@
 
 /* ---------------------------------- */
 
-/* .game-item:not(.game-item-form) .cancel-row {
-  display: none;
-} */
-
 /* ---------------------------------- */
 
 .game-item .game-time {
@@ -209,15 +205,6 @@
   transition: all 0.1s ease-in-out;
 }
 
-/* .game-item-form .match-item.cancel {
-  padding: .25rem;
-}
-
-.game-item-form .match-item.cancel>* {
-  font-size: 1.7rem;
-  transition: all 0.1s ease-in-out;
-} */
-
 .game-item .match-item i.bi-circle {
   opacity: .25;
   color: var(--ios-text-quaternary);
@@ -244,38 +231,7 @@
   color: var(--ios-red);
 }
 
-/* .checkbox-button.checked.result {
-  background-color: var(--ios-green);
-  border: 1px solid var(--ios-green);
-} */
-
-
-/* .game-item .match-col {
-  position: relative;
-}
-
-.game-item:not(.game-item-form) .match-col.cancelled::before {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 0;
-  width: 100%;
-  border-top: 2px solid var(--ios-red);
-  transform: translateY(-50%);
-} */
-
 /* ---------------------------------- */
-
-/* .game-item-form .alert {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  column-gap: .5rem;
-  font-size: .9rem;
-  padding: .4rem .5rem;
-  margin: 0;
-  margin-top: .5rem;
-} */
 
 .game-item-form .alert {
   font-size: .8rem;

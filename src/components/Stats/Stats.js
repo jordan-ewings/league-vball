@@ -57,7 +57,7 @@ export default function WeekStats() {
   // render
 
   return (
-    <div id="week-stats-container">
+    <div className="page">
       <MainHeader>
         <MainHeader.BackButton onClick={handleBack} />
         <MainHeader.Title text={weeks && weeks[weekId] ? weeks[weekId].label : 'Week'} />

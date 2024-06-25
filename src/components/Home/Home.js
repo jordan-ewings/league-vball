@@ -15,8 +15,8 @@ import '../../theme/Home.css';
 export default function Home() {
 
   return (
-    <div className="section">
-      <MainHeader />
+    <div className="page">
+      {/* <MainHeader /> */}
       <div className="main-body">
         <LeagueSelect />
         <AdminAccess />

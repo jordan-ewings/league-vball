@@ -25,8 +25,8 @@ export default function Standings() {
   }, [scrollToStatsMenu]);
 
   return (
-    <div className="section">
-      <MainHeader />
+    <div className="page">
+      {/* <MainHeader /> */}
       <div className="main-body">
         <Leaderboard />
         <div ref={statsMenuRef}><StatsMenu /></div>

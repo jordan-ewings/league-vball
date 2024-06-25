@@ -32,7 +32,7 @@ export default function Schedule() {
   // }, [activeWeek]);
 
   return !activeWeek ? <SpinnerBlock align="center" size="3rem" /> : (
-    <div className="section">
+    <div className="page">
       <MainHeader>
         <WeekButtons activeWeek={activeWeek} setActiveWeek={setActiveWeek} />
       </MainHeader>

@@ -55,9 +55,9 @@ export default function App() {
     <Router>
       <ContextProvider>
         <Navbar />
-        <Container>
-          <AnimatedRoutes />
-        </Container>
+        {/* <Container> */}
+        <AnimatedRoutes />
+        {/* </Container> */}
       </ContextProvider>
     </Router>
   )
