@@ -8,7 +8,7 @@ import LeagueSelect from './LeagueSelect';
 import AdminAccess from './AdminAccess';
 import TeamSelect from './TeamSelect';
 
-import './style.css';
+import '../../theme/Home.css';
 
 /* ---------------------------------- */
 

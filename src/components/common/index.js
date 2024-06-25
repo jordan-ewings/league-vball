@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useOptions, useLeague } from '../../contexts/SessionContext';
 import { useFirebase } from '../../firebase/useFirebase';
 import { useNavigate } from 'react-router-dom';
@@ -30,8 +30,30 @@ function stdChild(arg) {
 // MainHeader
 
 export function MainHeader({ children }) {
+
+  const nodeRef = useRef(null);
+  // const safeAreaTop = getComputedStyle(document.documentElement).getPropertyValue('--ion-safe-area-top').trim();
+
+  // useEffect(() => {
+  //   const header = nodeRef.current;
+  //   const handleScroll = () => {
+  //     if (header.getBoundingClientRect().top <= parseInt(safeAreaTop) + 10) {
+  //       if (!header.classList.contains('scrolled')) {
+  //         header.classList.add('scrolled');
+  //       }
+  //     } else {
+  //       if (header.classList.contains('scrolled')) {
+  //         header.classList.remove('scrolled');
+  //       }
+  //     }
+  //   }
+
+  //   window.addEventListener('scroll', handleScroll);
+  //   return () => window.removeEventListener('scroll', handleScroll);
+  // }, []);
+
   return (
-    <div className={`main-header`}>
+    <div className={`main-header`} ref={nodeRef}>
       {children}
     </div>
   )
@@ -134,12 +156,14 @@ export function MenuItem({
       <div className="label">
         {icon}
       </div>
-      <div className="contents">
-        <div className="main">{stdChild(main)}</div>
-        <div className="info">{stdChild(info)}</div>
-        <div className="trail">
-          {stdChild(trail)}
-          {nav && <div className="drill"><i className="fa-solid fa-chevron-right"></i></div>}
+      <div className="contents vstack justify-content-center">
+        <div className="hstack">
+          <div className="main hstack flex-grow-1 flex-shrink-1 overflow-hidden">{stdChild(main)}</div>
+          <div className="info hstack">{stdChild(info)}</div>
+          <div className="trail hstack flex-grow-0 flex-shrink-0">
+            {stdChild(trail)}
+            {nav && <div className="drill"><i className="fa-solid fa-chevron-right"></i></div>}
+          </div>
         </div>
       </div>
     </div>

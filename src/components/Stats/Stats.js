@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, memo, useRef, createRef } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useAuth, useLeague, useOptions, useNavHidden } from '../../contexts/SessionContext';
 import { useFirebase, useFirebaseCache } from '../../firebase/useFirebase';
 import { get, child, ref, onValue, off, set, update, increment } from "firebase/database";
@@ -34,11 +34,7 @@ export default function WeekStats() {
   // toggle nav
   useEffect(() => {
     setNavHidden(true);
-    window.scrollTo(0, 0);
-
-    return () => {
-      setNavHidden(false);
-    }
+    return () => setNavHidden(false);
   }, []);
 
   /* ---------------------------------- */
@@ -52,45 +48,13 @@ export default function WeekStats() {
     return update(ref(db), updates);
   }
 
+  // go back and indicate in state that we came from here
   const handleBack = () => {
-    navigate('/standings');
+    navigate('/standings', { state: { from: 'stats' } });
   }
 
   /* ---------------------------------- */
   // render
-
-  //   return (
-  //     <div id="week-stats-container">
-  //       <IonHeader>
-  //         <IonToolbar>
-  //           <IonButtons slot="start">
-  //             <IonBackButton defaultHref="/standings"></IonBackButton>
-  //           </IonButtons>
-  //           <IonTitle>{weeks && weeks[weekId] ? weeks[weekId].label : 'Week'}</IonTitle>
-  //           {controls && (
-  //             <IonButtons slot="end">
-  //               <IonButton onClick={handleSave} disabled={Object.keys(updates).length == 0}>Save</IonButton>
-  //             </IonButtons>
-  //           )}
-  //         </IonToolbar>
-  //       </IonHeader>
-  //       <div className="main-body">
-  //         <ContCard title="TEAM DRINKS" loading={!teams}>
-  //           {teams && Object.values(teams).map(team => (
-  //             <TeamDrinksItem
-  //               key={team.id}
-  //               team={team}
-  //               refWeekStat={`stats/${leagueId}/${weekId}/${team.id}/drinks/count`}
-  //               refTeamStat={`teams/${leagueId}/${team.id}/stats/drinks/count`}
-  //               setUpdates={setUpdates}
-  //               readOnly={!controls}
-  //             />
-  //           ))}
-  //         </ContCard>
-  //       </div>
-  //     </div>
-  //   );
-  // }
 
   return (
     <div id="week-stats-container">

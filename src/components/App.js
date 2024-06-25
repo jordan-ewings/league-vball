@@ -1,12 +1,11 @@
 /* ---------------------------------- */
 // app
 
-import React, { useState, useEffect, useRef } from 'react'; // npm install react
-import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom'; // npm install react-router-dom
-import { CSSTransition, SwitchTransition } from 'react-transition-group'; // npm install react-transition-group
-import { Container } from 'react-bootstrap'; // npm install react-bootstrap
-
-
+import React, { useState, useEffect, useRef, createRef } from 'react'; // npm install react
+import { HashRouter as Router, Routes, Route, useLocation, useOutlet, createHashRouter, RouterProvider } from 'react-router-dom'; // npm install react-router-dom
+import { createRoot } from 'react-dom/client';
+import { TransitionGroup, CSSTransition, SwitchTransition } from 'react-transition-group'; // npm install react-transition-group
+import { Container, NavLink } from 'react-bootstrap'; // npm install react-bootstrap
 import { ContextProvider } from '../contexts/SessionContext';
 import Navbar from './Navbar';
 // import Footer from './Footer';
@@ -30,11 +29,12 @@ const AnimatedRoutes = () => {
   const location = useLocation();
 
   return (
-    <SwitchTransition>
+    <SwitchTransition mode="out-in">
       <CSSTransition
         key={location.key}
-        timeout={200}
         classNames="fade"
+        timeout={200}
+        onEnter={() => window.scrollTo({ top: 0, behavior: 'instant' })}
       >
         <Routes location={location}>
           <Route path="/" exact element={<Home />} />
@@ -47,6 +47,8 @@ const AnimatedRoutes = () => {
   );
 };
 
+/* ---------------------------------- */
+
 export default function App() {
 
   return (
@@ -56,7 +58,6 @@ export default function App() {
         <Container>
           <AnimatedRoutes />
         </Container>
-        {/* <Footer /> */}
       </ContextProvider>
     </Router>
   )

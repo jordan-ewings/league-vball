@@ -23,6 +23,16 @@ export function initFirebaseStore() {
 }
 
 /* ---------------------------------- */
+// useFirebase collection of hooks
+
+// export const useFirebaseTools = {
+//   useFirebaseCache: useFirebaseCache,
+//   useFirebase: useFirebase,
+//   useLeaguePaths: useLeaguePaths,
+
+
+
+/* ---------------------------------- */
 // useFunctions
 // misc methods/function to be performed on each data nodes
 

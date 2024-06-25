@@ -1,32 +1,35 @@
 /* ---------------------------------- */
 // Standings
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 
 import Leaderboard from './Leaderboard';
 import StatsMenu from './StatsMenu';
 import { MainHeader } from '../common';
-import { useNavHidden } from '../../contexts/SessionContext';
 
-import './style.css';
+import '../../theme/Standings.css';
 
 /* ---------------------------------- */
 
 export default function Standings() {
 
-  const { setNavHidden } = useNavHidden();
+  const { state } = useLocation();
+  const scrollToStatsMenu = state && state.from === 'stats';
+  const statsMenuRef = useRef(null);
 
   useEffect(() => {
-    setNavHidden(false);
-    window.scrollTo(0, 0);
-  }, []);
+    if (scrollToStatsMenu) {
+      window.scrollTo({ top: statsMenuRef.current.offsetTop, behavior: 'instant' })
+    }
+  }, [scrollToStatsMenu]);
 
   return (
     <div className="section">
       <MainHeader />
       <div className="main-body">
         <Leaderboard />
-        <StatsMenu />
+        <div ref={statsMenuRef}><StatsMenu /></div>
       </div>
     </div>
   );

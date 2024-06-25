@@ -52,6 +52,8 @@ export default function GameItem({ game, readOnly }) {
     return Object.keys(mData).filter(mId => isCancelled(mData[mId]));
   };
 
+  const allCancelled = getCancelled(matches).length == 2;
+
   // get games that are not pre
   const isNotPre = (m) => m.status != 'PRE';
   const getNotPre = (mData) => {
@@ -238,12 +240,17 @@ export default function GameItem({ game, readOnly }) {
             </div>
           ))}
           <div className="alt-row">
+            <Collapse in={!form && !allCancelled}>
+              <div>
+                <span className="cancel-note">{note}</span>
+              </div>
+            </Collapse>
             <Collapse in={form}>
               <div>
                 <div className="hstack justify-content-between">
                   <div className="hstack gap-2">
                     <ButtonInline
-                      text="Cancel"
+                      text="Cancel All"
                       className="cancel-label"
                       onClick={() => handleCancelAllMatches()}
                       disabled={!form || pending || getCancelled(formMatches).length == 2}
@@ -269,7 +276,7 @@ export default function GameItem({ game, readOnly }) {
           </div>
         </div>
 
-        <div className="vr"></div>
+        <div className={`vr ${!form && allCancelled ? 'cancelled' : ''}`}></div>
 
         <div className={`vstack gap-0 flex-grow-0 flex-shrink-0 ps-1 ${readOnly ? 'pe-2' : ''}`}>
           <div className="hstack gap-2-alt">
@@ -286,15 +293,15 @@ export default function GameItem({ game, readOnly }) {
             </div>
           </div>
           <div className="mt-auto">
-            <Collapse in={!form}>
+            {/* <Collapse in={!form}>
               <div>
                 <span className="cancel-note">{note}</span>
               </div>
-            </Collapse>
-            <Collapse in={form}>
+            </Collapse> */}
+            <Collapse in={form && !saveDisabled}>
               <div>
                 <button
-                  className={`btn w-100 ${saveDisabled ? 'btn-outline-primary' : 'btn-primary'}`}
+                  className={`btn w-100 btn-primary`}
                   onClick={handleSave}
                   disabled={saveDisabled}
                 >

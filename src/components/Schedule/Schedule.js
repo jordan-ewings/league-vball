@@ -3,12 +3,12 @@
 
 import React, { useState, useEffect, useMemo, useCallback, memo, useRef, useLayoutEffect } from 'react';
 import { useFirebase, useFirebaseCache } from '../../firebase/useFirebase';
-
+import { isPlatform } from '@ionic/react';
 import { MainHeader, SpinnerBlock } from '../common';
 import WeekGames from './WeekGames';
 import WeekButtons from './WeekButtons';
 
-import './style.css';
+import '../../theme/Schedule.css';
 
 /* ---------------------------------- */
 
@@ -22,6 +22,14 @@ export default function Schedule() {
       setActiveWeek(currentWeek);
     }
   }, [currentWeek]);
+
+  // scroll to main header
+  // useLayoutEffect(() => {
+  //   const header = headerRef.current;
+  //   if (header && !isPlatform('desktop')) {
+  //     header.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  //   }
+  // }, [activeWeek]);
 
   return !activeWeek ? <SpinnerBlock align="center" size="3rem" /> : (
     <div className="section">

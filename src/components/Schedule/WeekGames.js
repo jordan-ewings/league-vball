@@ -11,8 +11,6 @@ import {
 } from '../common';
 
 import GameItem from './GameItem';
-import './style.css';
-
 
 /* ---------------------------------- */
 

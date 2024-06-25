@@ -12,19 +12,6 @@ import {
 export default function LeagueSelect() {
 
   const { leagues, leagueId, setLeagueId } = useLeague();
-
-  // const options = useMemo(() => {
-  //   if (leagues) {
-  //     return Object.values(leagues).sort((a, b) => {
-  //       if (a.season != b.season) return a.season - b.season;
-  //       if (a.session != b.session) return a.session - b.session;
-  //       if (a.league == b.league) return 0;
-  //       let days = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
-  //       return days.indexOf(a.league) - days.indexOf(b.league);
-  //     });
-  //   }
-  // }, [leagues]);
-
   const options = sortLeagues(leagues);
 
   const createTitle = (title) => {
@@ -33,7 +20,7 @@ export default function LeagueSelect() {
     return (
       <div className="d-flex justify-content-start align-items-center column-gap-2">
         <span>{main1}</span>
-        <span className="sub-main">{main2}</span>
+        {/* <span className="sub-main">{main2}</span> */}
       </div>
     );
   }

@@ -9,8 +9,6 @@ import {
   Spinner,
 } from '../common';
 
-import './style.css';
-
 /* ---------------------------------- */
 
 export default function WeekButtons({ activeWeek, setActiveWeek }) {
@@ -39,19 +37,21 @@ export default function WeekButtons({ activeWeek, setActiveWeek }) {
   }
 
   return (
-    <div className="week-filter-btn-group btn-group" role="group">
-      {weeks.map(({ id, label, gameday }) => (
-        <button
-          key={id}
-          ref={id == activeWeek ? activeButtonRef : null}
-          className={`btn week-filter-btn ${id == activeWeek ? 'active' : ''}`}
-          type="button"
-          onClick={() => setActiveWeek(id)}
-        >
-          <span className="week-btn-label">{label}</span>
-          <span className="week-btn-date">{formatDate(gameday)}</span>
-        </button>
-      ))}
+    <div className="week-filter">
+      <div className="week-filter-btn-group btn-group" role="group">
+        {weeks.map(({ id, label, gameday }) => (
+          <button
+            key={id}
+            ref={id == activeWeek ? activeButtonRef : null}
+            className={`btn week-filter-btn ${id == activeWeek ? 'active' : ''}`}
+            type="button"
+            onClick={() => setActiveWeek(id)}
+          >
+            <span className="week-btn-label">{label}</span>
+            <span className="week-btn-date">{formatDate(gameday)}</span>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
