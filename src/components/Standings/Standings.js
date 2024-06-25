@@ -26,7 +26,7 @@ export default function Standings() {
 
   return (
     <div className="page">
-      {/* <MainHeader /> */}
+      <MainHeader />
       <div className="main-body">
         <Leaderboard />
         <div ref={statsMenuRef}><StatsMenu /></div>

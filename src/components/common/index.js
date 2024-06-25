@@ -31,30 +31,9 @@ function stdChild(arg) {
 
 export function MainHeader({ children }) {
 
-  const nodeRef = useRef(null);
-  // const safeAreaTop = getComputedStyle(document.documentElement).getPropertyValue('--ion-safe-area-top').trim();
-
-  // useEffect(() => {
-  //   const header = nodeRef.current;
-  //   const handleScroll = () => {
-  //     if (header.getBoundingClientRect().top <= parseInt(safeAreaTop) + 10) {
-  //       if (!header.classList.contains('scrolled')) {
-  //         header.classList.add('scrolled');
-  //       }
-  //     } else {
-  //       if (header.classList.contains('scrolled')) {
-  //         header.classList.remove('scrolled');
-  //       }
-  //     }
-  //   }
-
-  //   window.addEventListener('scroll', handleScroll);
-  //   return () => window.removeEventListener('scroll', handleScroll);
-  // }, []);
-
   return (
-    <div className={`main-header`} ref={nodeRef}>
-      {children}
+    <div className={`main-header`}>
+      {children && <div className="main-header-content">{children}</div>}
     </div>
   )
 }

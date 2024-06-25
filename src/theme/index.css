@@ -201,8 +201,13 @@ nav.hidden {
 
 }
 
-.main-body:only-child {
+.main-body {
+  width: 100%;
   margin-top: 1rem;
+}
+
+.page {
+  position: relative;
 }
 
 /* .page {
@@ -246,10 +251,6 @@ footer span {
 }
 
 /* ---------------------------------- */
-
-.main-body {
-  width: 100%;
-}
 
 #leaderboard-container .cont-card-body {
   padding: .4rem .4rem;

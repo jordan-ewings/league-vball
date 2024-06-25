@@ -16,7 +16,7 @@ export default function Home() {
 
   return (
     <div className="page">
-      {/* <MainHeader /> */}
+      <MainHeader />
       <div className="main-body">
         <LeagueSelect />
         <AdminAccess />

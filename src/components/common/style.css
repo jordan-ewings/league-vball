@@ -1,12 +1,12 @@
 /* MainHeader ---------------------------------------- */
 
-.main-header::before {
+.main-header-content::before {
   content: "";
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
-  height: calc(100% + env(safe-area-inset-top));
+  height: calc(100% + env(safe-area-inset-top, 0));
   z-index: -1;
   opacity: 1;
   background-color: var(--ios-bg-primary);
@@ -14,44 +14,34 @@
 
 .main-header {
   position: sticky;
-  top: env(safe-area-inset-top);
-  /* top: 0;
-  padding-top: env(safe-area-inset-top); */
+  top: env(safe-area-inset-top, 0);
   left: 0;
   opacity: 1;
-  z-index: 1050;
+  z-index: 10;
   display: flex;
   justify-content: center;
   align-items: center;
-  min-width: 100%;
-  margin-bottom: 1rem;
-  /* border-bottom: .8px solid var(--ios-material-ultrathin); */
+  width: 100%;
 }
 
-.main-header.scrolled {
-  border-bottom: none;
+.main-header .main-header-content {
+  width: 100%;
 }
 
-.main-header.hidden {
-  display: none;
+.main-header-content {
+  padding-top: .75rem;
+  border-bottom: .8px solid var(--ios-material-ultrathin);
 }
 
-.main-header .main-header-title {
+.main-header-title {
   font-size: 1.1rem;
   font-weight: 600;
   color: var(--ios-text-primary);
   text-align: center;
 }
 
-.main-header:has(> *) {
-  /* padding-top: calc(env(safe-area-inset-top) + .75rem); */
-  padding-top: .75rem;
-  border-bottom: .8px solid var(--ios-material-ultrathin);
-}
-
-.main-header:has(> .main-header-title) {
+.main-header-content:has(> .main-header-title) {
   padding-bottom: .75rem;
-  border-bottom: .8px solid var(--ios-material-ultrathin);
 }
 
 .main-header .btn-back {
