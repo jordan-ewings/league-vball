@@ -61,7 +61,10 @@
 .cont-card {
   display: flex;
   flex-direction: column;
+  align-self: stretch;
   padding-bottom: 2rem;
+  min-width: 350px;
+  /* max-width: 500px; */
   /* margin-bottom: 2rem; */
 }
 
@@ -90,6 +93,7 @@
 .cont-card-body {
   display: flex;
   flex-direction: column;
+  align-self: stretch;
   /* padding: 0.1rem 0; */
   margin-inline: .75rem;
   background-color: var(--ios-bg-secondary);
@@ -244,17 +248,26 @@
   flex-direction: row;
   justify-content: center;
   align-items: center;
-  border-radius: 50%;
+  font-size: 1.7rem;
+  position: relative;
+  color: var(--ios-bg-tertiary);
+  transition: all 0.1s ease-in-out;
+}
+
+.checkbox.checked {
+  color: var(--ios-blue);
+  transition: all 0.1s ease-in-out;
 }
 
 .checkbox>ion-icon {
-  font-size: 1.7rem;
+  /* font-size: 1.7rem; */
   --ionicon-stroke-width: 24px;
 }
 
-.checkbox:not(.checked)>ion-icon {
+/* .checkbox:not(.checked) {
   color: var(--ios-bg-tertiary);
-}
+  transition: all 0.1s ease-in-out;
+} */
 
 /* TeamLabel ---------------------------------------- */
 

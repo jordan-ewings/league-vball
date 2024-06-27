@@ -2,13 +2,11 @@
 // Schedule
 
 import React, { useState, useEffect, useMemo, useCallback, memo, useRef, useLayoutEffect } from 'react';
-import { useFirebase, useFirebaseCache } from '../../firebase/useFirebase';
+import { useFirebase, useFirebaseCache } from '../firebase/useFirebase';
 import { isPlatform } from '@ionic/react';
-import { MainHeader, SpinnerBlock } from '../common';
-import WeekGames from './WeekGames';
-import WeekButtons from './WeekButtons';
-
-import '../../theme/Schedule.css';
+import { MainHeader, SpinnerBlock } from '../components/common';
+import WeekGames from '../components/WeekGames';
+import WeekButtons from '../components/WeekFilter';
 
 /* ---------------------------------- */
 
@@ -30,7 +28,7 @@ export default function Schedule() {
       <MainHeader>
         <WeekButtons activeWeek={activeWeek} setActiveWeek={setActiveWeek} />
       </MainHeader>
-      <div className="main-body">
+      <div className="main-body vstack align-items-center">
         <WeekGames weekId={activeWeek} />
       </div>
     </div>

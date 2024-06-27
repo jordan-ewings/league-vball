@@ -5,28 +5,25 @@ import React, { useRef, useState, useEffect, useLayoutEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { Container, Navbar, Nav } from 'react-bootstrap';
 
-import { useNavHidden } from '../contexts/SessionContext';
-
 /* ---------------------------------- */
 
 export default function Navigation() {
 
-  const { navHidden } = useNavHidden();
   const location = useLocation();
   const borderRef = useRef(null);
+  const navRef = useRef(null);
 
   useLayoutEffect(() => {
-    if (!navHidden) {
-      const active = document.querySelector('.nav-link.active');
-      if (active) {
-        borderRef.current.style.left = `${active.offsetLeft}px`;
-        borderRef.current.style.width = `${active.offsetWidth}px`;
-      }
-    }
-  }, [location.pathname, navHidden]);
+    setActiveBorder();
+  }, [location.pathname]);
+
+  useEffect(() => {
+    window.addEventListener('resize', setActiveBorder);
+    return () => window.removeEventListener('resize', setActiveBorder);
+  }, []);
 
   return (
-    <Navbar className={navHidden ? 'hidden' : ''}>
+    <Navbar ref={navRef}>
       <Container>
         <Nav className="flex-grow-1">
           <NavLink to="/standings" className="nav-link">STANDINGS</NavLink>
@@ -38,3 +35,26 @@ export default function Navigation() {
     </Navbar>
   );
 }
+
+/* ---------------------------------- */
+
+function setActiveBorder() {
+  const nav = document.querySelector('.navbar');
+  const hidden = nav.classList.contains('hidden');
+  if (hidden) return;
+
+  const active = document.querySelector('.nav-link.active');
+  if (active) {
+    const border = document.querySelector('.active-border');
+    border.style.left = `${active.offsetLeft}px`;
+    border.style.width = `${active.offsetWidth}px`;
+  }
+}
+
+/* ---------------------------------- */
+
+export function toggleNav(bool) {
+  const nav = document.querySelector('.navbar');
+  if (nav) nav.classList.toggle('hidden', !bool);
+}
+

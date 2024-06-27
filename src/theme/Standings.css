@@ -1,5 +1,9 @@
 /* Leaderboard -------------------------------------------------- */
 
+.cont-card-body:has(.leaderboard-table) {
+  padding: .4rem;
+}
+
 .leaderboard-table .team {
   text-align: left;
 }
@@ -12,22 +16,3 @@
   color: var(--ios-brown);
   opacity: .6;
 }
-
-/* .leaderboard-item .drinks,
-i.fa-beer {
-  color: var(--ios-brown);
-} */
-
-/* .leaderboard-item .drinks i.fa-beer {
-  color: var(--ios-brown);
-  opacity: .6;
-} */
-
-/* th.drinks i.fa-beer {
-  color: var(--ios-brown);
-  opacity: .6;
-}
-
-td.drinks {
-  color: var(--ios-brown)
-} */

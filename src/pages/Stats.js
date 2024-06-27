@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback, memo, useRef, createRef } from 'react';
-import { Link, useNavigate, useLocation, useParams } from 'react-router-dom';
-import { useAuth, useLeague, useOptions, useNavHidden } from '../../contexts/SessionContext';
-import { useFirebase, useFirebaseCache } from '../../firebase/useFirebase';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
+import { useAuth, useLeague, useOptions, useNavHidden } from '../contexts/SessionContext';
+import { toggleNav } from '../components/Navbar';
+import { useFirebase, useFirebaseCache } from '../firebase/useFirebase';
 import { get, child, ref, onValue, off, set, update, increment } from "firebase/database";
 
 import {
@@ -11,11 +12,8 @@ import {
   TeamLabel,
   ButtonInline,
   Stepper,
-} from '../common';
-import { db } from '../../firebase/firebase';
-
-// import { IonButton, IonButtons, IonBackButton, IonHeader, IonContent, IonNavLink, IonToolbar, IonTitle } from '@ionic/react';
-
+} from '../components/common';
+import { db } from '../firebase/firebase';
 
 /* ---------------------------------- */
 // WeekStats
@@ -28,17 +26,12 @@ export default function WeekStats() {
   const weeks = useFirebaseCache('weeks');
   const teams = useFirebaseCache('teams');
   const [updates, setUpdates] = useState({});
-  const { setNavHidden } = useNavHidden();
   const navigate = useNavigate();
 
-  // toggle nav
   useEffect(() => {
-    setNavHidden(true);
-    return () => setNavHidden(false);
+    toggleNav(false);
+    return () => toggleNav(true);
   }, []);
-
-  /* ---------------------------------- */
-  // handleSave
 
   useEffect(() => {
     console.log('updates:', updates);
@@ -48,34 +41,31 @@ export default function WeekStats() {
     return update(ref(db), updates);
   }
 
-  // go back and indicate in state that we came from here
-  const handleBack = () => {
-    navigate('/standings', { state: { from: 'stats' } });
-  }
-
   /* ---------------------------------- */
   // render
 
   return (
     <div className="page">
       <MainHeader>
-        <MainHeader.BackButton onClick={handleBack} />
+        <MainHeader.BackButton onClick={() => navigate('/standings', { state: { from: 'stats' } })} />
         <MainHeader.Title text={weeks && weeks[weekId] ? weeks[weekId].label : 'Week'} />
         {controls && <MainHeader.SaveButton onClick={handleSave} disabled={Object.keys(updates).length == 0} />}
       </MainHeader>
-      <div className="main-body">
-        <ContCard title="TEAM DRINKS" loading={!teams}>
-          {teams && Object.values(teams).map(team => (
-            <TeamDrinksItem
-              key={team.id}
-              team={team}
-              refWeekStat={`stats/${leagueId}/${weekId}/${team.id}/drinks/count`}
-              refTeamStat={`teams/${leagueId}/${team.id}/stats/drinks/count`}
-              setUpdates={setUpdates}
-              readOnly={!controls}
-            />
-          ))}
-        </ContCard>
+      <div className="main-body vstack align-items-center">
+        <div className="col-12 col-md-8">
+          <ContCard title="TEAM DRINKS" loading={!teams}>
+            {teams && Object.values(teams).map(team => (
+              <TeamDrinksItem
+                key={team.id}
+                team={team}
+                refWeekStat={`stats/${leagueId}/${weekId}/${team.id}/drinks/count`}
+                refTeamStat={`teams/${leagueId}/${team.id}/stats/drinks/count`}
+                setUpdates={setUpdates}
+                readOnly={!controls}
+              />
+            ))}
+          </ContCard>
+        </div>
       </div>
     </div>
   );
@@ -83,7 +73,6 @@ export default function WeekStats() {
 
 /* ---------------------------------- */
 
-// function TeamDrinksItem({ team, dataPath, setUpdates }) {
 const TeamDrinksItem = memo(function TeamDrinksItem({ team, refWeekStat, refTeamStat, setUpdates, readOnly }) {
 
   const drinks = useFirebase(refWeekStat);
@@ -117,4 +106,3 @@ const TeamDrinksItem = memo(function TeamDrinksItem({ team, refWeekStat, refTeam
     />
   );
 });
-// }

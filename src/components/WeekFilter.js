@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback, memo, useRef, useLayoutEffect } from 'react';
 import { Button, ButtonGroup } from 'react-bootstrap';
-import { useFirebase, useFirebaseCache } from '../../firebase/useFirebase';
+import { useFirebase, useFirebaseCache } from '../firebase/useFirebase';
 
 /* ---------------------------------- */
 

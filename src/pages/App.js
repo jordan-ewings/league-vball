@@ -6,11 +6,11 @@ import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-d
 import { CSSTransition, SwitchTransition } from 'react-transition-group'; // npm install react-transition-group
 
 import { ContextProvider } from '../contexts/SessionContext';
-import Navbar from './Navbar';
-import Home from './Home/Home';
-import Standings from './Standings/Standings';
-import Stats from './Stats/Stats';
-import Schedule from './Schedule/Schedule';
+import Navbar from '../components/Navbar';
+import Home from './Home';
+import Standings from './Standings';
+import Stats from './Stats';
+import Schedule from './Schedule';
 
 import '@ionic/react/css/core.css';
 import '@ionic/react/css/palettes/dark.always.css';
@@ -18,6 +18,20 @@ import { setupIonicReact } from '@ionic/react';
 setupIonicReact({
   mode: 'ios'
 });
+
+/* ---------------------------------- */
+
+export default function App() {
+
+  return (
+    <Router>
+      <ContextProvider>
+        <Navbar />
+        <AnimatedRoutes />
+      </ContextProvider>
+    </Router>
+  )
+}
 
 /* ---------------------------------- */
 
@@ -43,20 +57,6 @@ const AnimatedRoutes = () => {
     </SwitchTransition>
   );
 };
-
-/* ---------------------------------- */
-
-export default function App() {
-
-  return (
-    <Router>
-      <ContextProvider>
-        <Navbar />
-        <AnimatedRoutes />
-      </ContextProvider>
-    </Router>
-  )
-}
 
 
 

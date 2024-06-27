@@ -1,6 +1,4 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useOptions, useLeague } from '../../contexts/SessionContext';
-import { useFirebase } from '../../firebase/useFirebase';
 import { useNavigate } from 'react-router-dom';
 import { ClipLoader } from 'react-spinners';
 import { IonIcon } from '@ionic/react';
@@ -12,18 +10,18 @@ import {
   banOutline,
 } from 'ionicons/icons';
 
-import './style.css';
-import { set } from 'firebase/database';
+import { useOptions, useLeague } from '../contexts/SessionContext';
+import { useFirebase } from '../firebase/useFirebase';
 
 /* ---------------------------------- */
 // stdChild
 
 function stdChild(arg) {
-  // return typeof arg === 'string' ? <span>{arg}</span> : arg;
-  // if no arg, return null
-  // if arg is a string, return a span element with the string as the text
-  // otherwise, return the arg
   return arg ? (typeof arg === 'string' ? <span>{arg}</span> : arg) : null;
+}
+
+function themeColor(color) {
+  return getComputedStyle(document.documentElement).getPropertyValue(`--ios-${color}`).trim();
 }
 
 /* ---------------------------------- */
@@ -97,12 +95,7 @@ MainHeader.SaveButton = function MainHeaderSaveButton({ onClick, disabled = fals
 /* ---------------------------------- */
 // ContCard
 
-export function ContCard({ children,
-  title,
-  footer,
-  className = '',
-  loading = false,
-}) {
+export function ContCard({ children, title, footer, className = '', loading = false }) {
 
   return (
     <div className={`cont-card ${className}`}>
@@ -120,15 +113,7 @@ export function ContCard({ children,
 /* ---------------------------------- */
 // MenuItem
 
-export function MenuItem({
-  className = '',
-  icon,
-  main,
-  info,
-  trail,
-  nav = false,
-  onClick
-}) {
+export function MenuItem({ className = '', icon, main, info, trail, nav = false, onClick }) {
 
   return (
     <div className={`menu-item ${className}`} {...(onClick && { role: 'button' })} onClick={onClick}>
@@ -152,33 +137,15 @@ export function MenuItem({
 /* ---------------------------------- */
 // IconButton
 
-// export function IconButton({ icon, bare = false, small = false, onClick, className = '', hide = false, disabled = false }) {
-//   if (hide) return null;
-//   let divClass = 'icon-button';
-//   if (className) divClass += ` ${className}`;
-//   if (bare) divClass += ' bare';
-//   if (small) divClass += ' small';
-//   if (disabled) divClass += ' disabled';
-//   // const divClass = `icon-button ${className} ${bare ? 'bare' : ''} ${small ? 'small' : ''} ${disabled ? 'disabled' : ''}`;
-//   return (
-//     <div className={divClass} role="button" onClick={onClick}>
-//       <i className={icon}></i>
-//       {/* <ion-icon name="checkmark-circle-outline"></ion-icon> */}
-//     </div>
-//   );
-// }
-
 export function IconButton({ icon, color, raised = true, onClick, hide = false, className }) {
 
   if (hide) return null;
-
   let classNames = 'icon-button';
   if (raised) classNames += ' raised';
   if (className) classNames += ` ${className}`;
 
-  // get --ios-{color} from css
   const style = {};
-  if (color) style.color = getComputedStyle(document.documentElement).getPropertyValue(`--ios-${color}`).trim();
+  if (color) style.color = themeColor(color);
 
   return (
     <div className={classNames} onClick={onClick} role="button">
@@ -190,7 +157,7 @@ export function IconButton({ icon, color, raised = true, onClick, hide = false, 
 /* ---------------------------------- */
 // CheckboxButton
 
-export function CheckboxButton({ checked, disabled, size, color = 'blue', filled = true, xMark = false, className = '', onClick }) {
+export function CheckboxButton({ checked, disabled, size, xMark = false, className = '', onClick }) {
 
   const handleClick = () => {
     if (onClick && !disabled) onClick();
@@ -199,33 +166,19 @@ export function CheckboxButton({ checked, disabled, size, color = 'blue', filled
   let classNames = 'checkbox';
   if (checked) classNames += ' checked';
   if (disabled) classNames += ' disabled';
-  if (filled) classNames += ' filled';
   if (className) classNames += ` ${className}`;
 
-  // get --ios-{color} from css
-  const compColor = getComputedStyle(document.documentElement).getPropertyValue(`--ios-${color}`).trim();
-  const style = {};
-  if (checked) style.color = compColor;
-  if (size) style.fontSize = size;
-
   return (
-    <div className={classNames} {...(!disabled && { role: 'button' })} onClick={handleClick}>
+    <div className={classNames} role="button" onClick={handleClick}>
       <IonIcon
-        icon={checked && filled && !xMark
-          ? checkmarkCircle
-          : (checked && !filled && !xMark)
-            ? checkmarkCircleOutline
-            : (xMark)
-              ? banOutline
-              : ellipseOutline}
-        style={style}
+        icon={
+          (checked && !xMark) ? checkmarkCircle :
+            (xMark) ? banOutline :
+              ellipseOutline}
       />
     </div>
   );
 }
-
-/* ---------------------------------- */
-
 
 /* ---------------------------------- */
 // RadioMenuItem
@@ -301,10 +254,12 @@ export function SpinnerBlock({ align = 'start', size = '1.5rem' }) {
 
 export function ButtonInline({ icon, text, onClick, disabled = false, className = '' }) {
 
-  const btnClass = `button-inline ${className} ${disabled ? 'disabled' : ''}`;
+  let classNames = 'button-inline';
+  if (className) classNames += ` ${className}`;
+  if (disabled) classNames += ' disabled';
 
   return (
-    <div className={btnClass} onClick={onClick} role="button">
+    <div className={classNames} onClick={onClick} role="button">
       {icon && <i className={icon}></i>}
       <span>{text}</span>
     </div>
@@ -362,12 +317,12 @@ export const TextInput = React.forwardRef(({ type, placeholder, onChange }, ref)
 
 export function Table({ children, ...props }) {
 
-  let className = "table";
-  if ('className' in props) className += ' ' + props.className;
+  let classNames = "table";
+  if ('className' in props) classNames += ' ' + props.className;
 
   return (
     <div className="table-responsive">
-      <table className={className}>
+      <table className={classNames}>
         {children}
       </table>
     </div>

@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { useAuth } from '../../contexts/SessionContext';
+import { useAuth } from '../contexts/SessionContext';
 import { IonToggle } from '@ionic/react';
 
 import {
@@ -9,7 +9,7 @@ import {
   Spinner,
   ButtonInline,
   TextInput,
-} from '../common';
+} from '../components/common';
 
 /* ---------------------------------- */
 // admin access
@@ -45,31 +45,31 @@ export default function AdminAccess() {
   }
 
   return (
-    <div id="admin-container">
-      <ContCard title="ADMIN ACCESS" footer={renderFooter()}>
-        {!admin && (
-          <form onSubmit={handleSignIn}>
-            <MenuItem
-              className="login-form"
-              main={<TextInput type="password" placeholder="Enter password..." ref={passwordRef} />}
-              trail={loading ? <Spinner /> : <ButtonInline icon="fa-regular fa-circle-right" onClick={handleSignIn} />}
-            />
-          </form>
-        )}
-        {admin && (
-          <>
-            <MenuItem
-              className="logged-in-form"
-              main="Enable Controls"
-              trail={<IonToggle checked={controls} onIonChange={() => setControls(!controls)} />}
-            />
-            <MenuItem
-              className="logout-form"
-              main={<ButtonInline text="Logout" onClick={logout} />}
-            />
-          </>
-        )}
-      </ContCard>
-    </div>
+    // <div id="admin-container">
+    <ContCard title="ADMIN ACCESS" footer={renderFooter()}>
+      {!admin && (
+        <form onSubmit={handleSignIn}>
+          <MenuItem
+            className="login-form"
+            main={<TextInput type="password" placeholder="Enter password..." ref={passwordRef} />}
+            trail={loading ? <Spinner /> : <ButtonInline icon="fa-regular fa-circle-right" onClick={handleSignIn} />}
+          />
+        </form>
+      )}
+      {admin && (
+        <>
+          <MenuItem
+            className="logged-in-form"
+            main="Enable Controls"
+            trail={<IonToggle checked={controls} onIonChange={() => setControls(!controls)} />}
+          />
+          <MenuItem
+            className="logout-form"
+            main={<ButtonInline text="Logout" onClick={logout} />}
+          />
+        </>
+      )}
+    </ContCard>
+    // </div>
   );
 }

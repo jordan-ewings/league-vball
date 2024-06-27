@@ -1,10 +1,10 @@
 import React, { useMemo } from 'react';
-import { useFirebase, useFirebaseCache } from '../../firebase/useFirebase';
+import { useFirebase, useFirebaseCache } from '../firebase/useFirebase';
 import {
   ContCard,
   TeamLabel,
   Table,
-} from '../common';
+} from './common';
 
 /* ---------------------------------- */
 
@@ -13,7 +13,7 @@ export default function Leaderboard() {
   const teams = useFirebase('teams', (raw) => processTeams(raw));
 
   return (
-    <div id="leaderboard-container">
+    <div id="leaderboard-container" className="vstack">
       <ContCard title="LEADERBOARD" loading={!teams}>
         <Table className="leaderboard-table">
           <thead>

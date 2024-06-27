@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, memo, useRef, createRef } from 'react';
-import { useFirebase, useLeaguePaths, useFunctions } from '../../firebase/useFirebase';
+import { useFirebase, useLeaguePaths, useFunctions } from '../firebase/useFirebase';
 import {
   Collapse,
   Alert,
@@ -10,7 +10,7 @@ import {
   IconButton,
   CheckboxButton,
   ButtonInline,
-} from '../common';
+} from './common';
 
 /* ---------------------------------- */
 
@@ -23,8 +23,7 @@ export default function GameItem({ game, readOnly }) {
   const [formMatches, setFormMatches] = useState(null);
   const [form, setForm] = useState(false);
   const [pending, setPending] = useState(false);
-  const [alert, setAlert] = useState(null);
-  const [note, setNote] = useState(null);
+  const [alert, setAlert] = useState(false);
 
   const teams = game.teams;
   const teamIds = Object.keys(game.teams);
@@ -51,7 +50,10 @@ export default function GameItem({ game, readOnly }) {
     return Object.keys(mData).filter(mId => isNotPre(mData[mId]));
   };
 
+  const liveMatches = formMatches || matches;
+
   const allCancelled = getCancelled(matches).length == 2;
+  const someCancelled = getCancelled(matches).length == 1;
   const allMatchesEntered = getNotPre(matches).length == 2;
   const saveDisabled = !form || pending || isEqual(matches, formMatches);
   const matchItemsDisabled = !form || pending;
@@ -80,7 +82,7 @@ export default function GameItem({ game, readOnly }) {
           setFormMatches(null);
         } else {
           setFormMatches(copy(matches));
-          setAlert('Game updated by another user.');
+          setAlert(true);
         }
       }
     } else {
@@ -88,15 +90,8 @@ export default function GameItem({ game, readOnly }) {
       setForm(false);
       setFormMatches(null);
       setPending(false);
-      setAlert(null);
+      setAlert(false);
     }
-
-    const cancelled = getCancelled(matches);
-    const c1 = cancelled.includes(matchIds[0]);
-    const c2 = cancelled.includes(matchIds[1]);
-    if (c1 && !c2) setNote('Game 1 cancelled');
-    else if (!c1 && c2) setNote('Game 2 cancelled');
-    else setNote(null);
   };
 
   useEffect(() => {
@@ -125,7 +120,7 @@ export default function GameItem({ game, readOnly }) {
       });
       return newMatches;
     });
-    setAlert(null);
+    setAlert(false);
   }
 
   const updateFormMatches = (matchId, newMatch) => {
@@ -134,7 +129,7 @@ export default function GameItem({ game, readOnly }) {
       newMatches[matchId] = newMatch;
       return newMatches;
     });
-    setAlert(null);
+    setAlert(false);
   }
 
   // edit button click
@@ -146,7 +141,7 @@ export default function GameItem({ game, readOnly }) {
       setForm(true);
       setFormMatches(copy(matches));
     }
-    setAlert(null);
+    setAlert(false);
   }
 
   // save button click
@@ -185,54 +180,101 @@ export default function GameItem({ game, readOnly }) {
     return (formMatches) ? formMatches[matchId] : (matches) ? matches[matchId] : null;
   }
 
+  const renderTeamRowContent = (teamId) => {
+    return (
+      <div className="hstack justify-content-between">
+        <TeamLabel team={teams[teamId]} withRecord />
+        <div className="hstack gap-1">
+          <TeamMatchItem match={getMatch(matchIds[0])} teamId={teamId} disabled={matchItemsDisabled} onChange={newMatch => updateFormMatches(matchIds[0], newMatch)} />
+          <div className="match-separator vr"></div>
+          <TeamMatchItem match={getMatch(matchIds[1])} teamId={teamId} disabled={matchItemsDisabled} onChange={newMatch => updateFormMatches(matchIds[1], newMatch)} />
+        </div>
+      </div>
+    );
+  }
+
+  const renderCancelRowContent = () => {
+    return (
+      <div>
+        <div className="hstack justify-content-between">
+          {/* <ButtonInline text="Cancel All" className="cancel-label" onClick={() => handleCancelAllMatches()} disabled={!form || pending || getCancelled(formMatches).length == 2} /> */}
+          <div className="cancel-label"></div>
+          <div className="hstack gap-1">
+            <CancelMatchItem match={getMatch(matchIds[0])} disabled={matchItemsDisabled} onChange={newMatch => updateFormMatches(matchIds[0], newMatch)} />
+            <div className="match-separator vr"></div>
+            <CancelMatchItem match={getMatch(matchIds[1])} disabled={matchItemsDisabled} onChange={newMatch => updateFormMatches(matchIds[1], newMatch)} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const renderNoteRowContent = () => {
+    const can = getCancelled(matches);
+    const cancelNote = (can.length == 1) ? 'Game ' + (matchIds.indexOf(can[0]) + 1) + ' cancelled' : null;
+    return (
+      <div>
+        <div className="vstack justify-content-end">
+          {cancelNote && <span className="cancel-note">{cancelNote}</span>}
+        </div>
+      </div>
+    );
+  }
+
+  const renderAlertRowContent = () => {
+    return (
+      <div>
+        <Alert variant="danger" className="hstack gap-1 py-1 px-2 m-0 mt-2">
+          <i className="bi bi-exclamation-triangle"></i>
+          <span>Game updated</span>
+        </Alert>
+      </div>
+    );
+  }
+
+  const renderLabelRowContent = () => {
+    return (
+      <div>
+        <div className="hstack justify-content-between align-items-end">
+          <div className="team-header"></div>
+          <div className="hstack gap-1">
+            <div className="match-header"><span>G1</span></div>
+            <div className="match-separator vr"></div>
+            <div className="match-header"><span>G2</span></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   /* ---------------------------------- */
   // return
 
+  let gameItemClass = 'game-item';
+  if (!form) gameItemClass += ' view';
+  if (form) gameItemClass += ' form';
+  if (pending) gameItemClass += ' pending';
+  if (allMatchesEntered) gameItemClass += ' post';
+
+  let statusBarClass = 'status-bar vr';
+  if (getCancelled(liveMatches).length == 2) statusBarClass += ' cancelled';
+
   return (
-    <div className={`game-item ${form ? 'game-item-form' : ''} ${pending ? 'pending' : ''} ${allMatchesEntered ? 'post' : ''}`}>
+    <div className={gameItemClass}>
       <div className="hstack gap-2-alt align-items-start">
 
-        <div className="vstack flex-grow-1 flex-shrink-1 overflow-hidden">
-          {teamIds.map(teamId => (
-            <div key={teamId} className="main-row team-row">
-              <TeamLabel team={teams[teamId]} withRecord />
-              <div className="hstack">
-                <TeamMatchItem match={getMatch(matchIds[0])} teamId={teamId} disabled={matchItemsDisabled} onChange={newMatch => updateFormMatches(matchIds[0], newMatch)} />
-                <TeamMatchItem match={getMatch(matchIds[1])} teamId={teamId} disabled={matchItemsDisabled} onChange={newMatch => updateFormMatches(matchIds[1], newMatch)} />
-              </div>
-            </div>
-          ))}
-          <div className={`alt-row ${getCancelled(formMatches).length == 0 ? 'none' : ''}`}>
-            <Collapse in={!form}>
-              <div><span className="cancel-note">{note}</span></div>
-            </Collapse>
-            <Collapse in={form}>
-              <div>
-                <div className="hstack justify-content-between">
-                  <ButtonInline text="Cancel All" className="cancel-label" onClick={() => handleCancelAllMatches()} disabled={!form || pending || getCancelled(formMatches).length == 2} />
-                  <div className="hstack">
-                    <CancelMatchItem match={getMatch(matchIds[0])} disabled={matchItemsDisabled} onChange={newMatch => updateFormMatches(matchIds[0], newMatch)} />
-                    <CancelMatchItem match={getMatch(matchIds[1])} disabled={matchItemsDisabled} onChange={newMatch => updateFormMatches(matchIds[1], newMatch)} />
-                  </div>
-                </div>
-              </div>
-            </Collapse>
-          </div>
-          <div className="alert-row">
-            <Collapse in={alert != null}>
-              <div>
-                <Alert variant="danger" className="hstack gap-1 py-1 px-2 m-0 mt-2">
-                  <i className="bi bi-exclamation-triangle"></i>
-                  <span>{alert}</span>
-                </Alert>
-              </div>
-            </Collapse>
-          </div>
+        <div className="vstack overflow-hidden">
+          <div className="main-row team-row">{renderTeamRowContent(teamIds[0])}</div>
+          <div className="main-row team-row">{renderTeamRowContent(teamIds[1])}</div>
+          {/* <Collapse in={!form && someCancelled} className="note-row">{renderNoteRowContent()}</Collapse> */}
+          <Collapse in={form} className="cancel-row">{renderCancelRowContent()}</Collapse>
+          <Collapse in={form} className="label-row">{renderLabelRowContent()}</Collapse>
+          <Collapse in={alert} className="alert-row">{renderAlertRowContent()}</Collapse>
         </div>
 
-        <div className={`vr ${!form && allCancelled ? 'cancelled' : ''}`}></div>
+        <div className={statusBarClass}></div>
 
-        <div className={`vstack flex-grow-0 flex-shrink-0 ps-1 ${readOnly ? 'pe-2' : ''}`}>
+        <div className={`vstack flex-fit ps-1 ${readOnly ? 'pe-2' : ''}`}>
           <div className="hstack gap-2-alt">
             <div className="vstack">
               <div className="game-time">{game.time}</div>
@@ -265,11 +307,11 @@ export default function GameItem({ game, readOnly }) {
 function TeamMatchItem({ match, teamId, disabled = false, onChange }) {
 
   if (!match) return <CheckboxButton className="match-item result" checked={false} disabled={true} />;
+  let classNames = 'match-item result ' + match.status.toLowerCase();
 
   return (
     <CheckboxButton
-      className={`match-item result ${match.status != 'PRE' ? 'entered' : ''}`}
-      color="green"
+      className={classNames}
       checked={match.winner == teamId}
       disabled={disabled}
       onClick={() => {
@@ -287,11 +329,11 @@ function TeamMatchItem({ match, teamId, disabled = false, onChange }) {
 function CancelMatchItem({ match, disabled = false, onChange }) {
 
   if (!match) return <CheckboxButton className="match-item cancel" checked={false} disabled={true} />;
+  let classNames = 'match-item cancel ' + match.status.toLowerCase();
 
   return match && (
     <CheckboxButton
-      className={`match-item cancel`}
-      color="red"
+      className={classNames}
       xMark={true}
       checked={match.status == 'CNCL'}
       disabled={disabled}

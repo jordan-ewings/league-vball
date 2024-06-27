@@ -1,10 +1,10 @@
 import React, { useMemo } from 'react';
-import { useLeague } from '../../contexts/SessionContext';
+import { useLeague } from '../contexts/SessionContext';
 
 import {
   ContCard,
   RadioMenuItem,
-} from '../common';
+} from '../components/common';
 
 /* ---------------------------------- */
 // league select
@@ -26,20 +26,20 @@ export default function LeagueSelect() {
   }
 
   return (
-    <div id="league-select-container">
-      <ContCard title="SELECT LEAGUE" loading={!options}>
-        <div className="radio-menu">
-          {options && options.map(o => (
-            <RadioMenuItem
-              key={o.id}
-              title={createTitle(o.title)}
-              selected={o.id == leagueId}
-              onClick={() => setLeagueId(o.id)}
-            />
-          ))}
-        </div>
-      </ContCard>
-    </div>
+    // <div id="league-select-container">
+    <ContCard title="SELECT LEAGUE" loading={!options}>
+      <div className="radio-menu">
+        {options && options.map(o => (
+          <RadioMenuItem
+            key={o.id}
+            title={createTitle(o.title)}
+            selected={o.id == leagueId}
+            onClick={() => setLeagueId(o.id)}
+          />
+        ))}
+      </div>
+    </ContCard>
+    // </div>
   );
 }
 

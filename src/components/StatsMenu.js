@@ -1,15 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback, memo, useRef, createRef } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import { useFirebase, useFirebaseCache } from '../../firebase/useFirebase';
-import { useNavHidden } from '../../contexts/SessionContext';
+import { useNavigate } from 'react-router-dom';
+import { useFirebaseCache } from '../firebase/useFirebase';
 
-import {
-  ContCard,
-  MenuItem,
-} from '../common';
-
-import Stats from '../Stats/Stats';
-import { IonButton, IonHeader, IonContent, IonNavLink, IonToolbar, IonTitle } from '@ionic/react';
+import { ContCard, MenuItem } from './common';
 
 /* ---------------------------------- */
 // StatsMenu
@@ -17,11 +10,10 @@ import { IonButton, IonHeader, IonContent, IonNavLink, IonToolbar, IonTitle } fr
 export default function StatsMenu() {
 
   const navigate = useNavigate();
-  const { setNavHidden } = useNavHidden();
   const weeks = useFirebaseCache('weeks', raw => Object.values(raw));
 
   return (
-    <div id="stats-container">
+    <div id="stats-container" className="vstack">
       <ContCard title="STATS" loading={!weeks}>
         {weeks && weeks.map(week => (
           <MenuItem
@@ -29,10 +21,7 @@ export default function StatsMenu() {
             main={week.label}
             trail={new Date(week.gameday).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
             nav={true}
-            onClick={() => {
-              setNavHidden(true);
-              navigate(`/stats/${week.id}`)
-            }}
+            onClick={() => navigate(`/stats/${week.id}`)}
           />
         ))}
       </ContCard>

@@ -2,13 +2,14 @@
 // Schedule
 
 import React, { useState, useEffect, useMemo, useCallback, memo, useRef, useLayoutEffect } from 'react';
-import { useFirebase, useFirebaseCache } from '../../firebase/useFirebase';
-import { useAuth } from '../../contexts/SessionContext';
+import { useFirebase, useFirebaseCache } from '../firebase/useFirebase';
+import { useAuth } from '../contexts/SessionContext';
 import {
   MainHeader,
   ContCard,
   SpinnerBlock,
-} from '../common';
+  CheckboxButton,
+} from './common';
 
 import GameItem from './GameItem';
 
@@ -20,14 +21,39 @@ export default function WeekGames({ weekId }) {
   const gamesByTime = useWeekGamesData(weekId);
 
   return (
-    <div className="week-games">
+    <div className="week-games col-12 col-sm-8">
       {gamesByTime && Object.entries(gamesByTime).map(([time, games]) => (
         <ContCard key={time} className="game-group">
           <GameItem game={games[0]} readOnly={!controls} />
           {games[1] && <GameItem game={games[1]} readOnly={!controls} />}
         </ContCard>
-      ))}
-    </div>
+      ))
+      }
+      <ContCard className="game-group legend" title="LEGEND">
+        <div className="game-item legend">
+          <div className="vstack gap-1">
+            <div className="legend-item hstack">
+              <span>Winner</span>
+              <div className="legend-key">
+                <CheckboxButton className="match-item result" checked={true} disabled={true} />
+              </div>
+            </div>
+            <div className="legend-item hstack">
+              <span>Not entered</span>
+              <div className="legend-key">
+                <CheckboxButton className="match-item result" checked={false} disabled={true} />
+              </div>
+            </div>
+            <div className="legend-item hstack">
+              <span>Both games cancelled</span>
+              <div className="legend-key">
+                <div className="vr status-bar cancelled"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ContCard>
+    </div >
   );
 }
 
