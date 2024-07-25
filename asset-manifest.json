@@ -1,23 +1,23 @@
 {
   "files": {
-    "main.css": "/league-vball/static/css/main.9085536a.css",
-    "main.js": "/league-vball/static/js/main.fbb5ea10.js",
-    "static/js/867.de5c364d.chunk.js": "/league-vball/static/js/867.de5c364d.chunk.js",
-    "static/js/284.685bc969.chunk.js": "/league-vball/static/js/284.685bc969.chunk.js",
-    "static/js/923.f525b8d7.chunk.js": "/league-vball/static/js/923.f525b8d7.chunk.js",
-    "static/js/627.850fe9e5.chunk.js": "/league-vball/static/js/627.850fe9e5.chunk.js",
+    "main.css": "/league-vball/static/css/main.47aa5912.css",
+    "main.js": "/league-vball/static/js/main.4259407b.js",
+    "static/js/867.dbcf7cd7.chunk.js": "/league-vball/static/js/867.dbcf7cd7.chunk.js",
+    "static/js/284.2c9d9fec.chunk.js": "/league-vball/static/js/284.2c9d9fec.chunk.js",
+    "static/js/923.8e12fa78.chunk.js": "/league-vball/static/js/923.8e12fa78.chunk.js",
+    "static/js/627.9ca5df2b.chunk.js": "/league-vball/static/js/627.9ca5df2b.chunk.js",
     "static/js/217.02962056.chunk.js": "/league-vball/static/js/217.02962056.chunk.js",
     "index.html": "/league-vball/index.html",
-    "main.9085536a.css.map": "/league-vball/static/css/main.9085536a.css.map",
-    "main.fbb5ea10.js.map": "/league-vball/static/js/main.fbb5ea10.js.map",
-    "867.de5c364d.chunk.js.map": "/league-vball/static/js/867.de5c364d.chunk.js.map",
-    "284.685bc969.chunk.js.map": "/league-vball/static/js/284.685bc969.chunk.js.map",
-    "923.f525b8d7.chunk.js.map": "/league-vball/static/js/923.f525b8d7.chunk.js.map",
-    "627.850fe9e5.chunk.js.map": "/league-vball/static/js/627.850fe9e5.chunk.js.map",
+    "main.47aa5912.css.map": "/league-vball/static/css/main.47aa5912.css.map",
+    "main.4259407b.js.map": "/league-vball/static/js/main.4259407b.js.map",
+    "867.dbcf7cd7.chunk.js.map": "/league-vball/static/js/867.dbcf7cd7.chunk.js.map",
+    "284.2c9d9fec.chunk.js.map": "/league-vball/static/js/284.2c9d9fec.chunk.js.map",
+    "923.8e12fa78.chunk.js.map": "/league-vball/static/js/923.8e12fa78.chunk.js.map",
+    "627.9ca5df2b.chunk.js.map": "/league-vball/static/js/627.9ca5df2b.chunk.js.map",
     "217.02962056.chunk.js.map": "/league-vball/static/js/217.02962056.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.9085536a.css",
-    "static/js/main.fbb5ea10.js"
+    "static/css/main.47aa5912.css",
+    "static/js/main.4259407b.js"
   ]
 }
