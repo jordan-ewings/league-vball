@@ -54,10 +54,7 @@ export default function GameItem({ game, readOnly, isDisplayed }) {
     }
   }
 
-  /* ---------------------------------- */
-  // onGameUpdate
-
-  useEffect(() => {
+  const handleMatchUpdate = () => {
     if (!form) return;
     if (formPending) {
       setFormPending(false);
@@ -67,10 +64,26 @@ export default function GameItem({ game, readOnly, isDisplayed }) {
     setFormMatch(copy(match));
     setAlert(true);
     console.log('Alert: game updated');
+  }
+
+  /* ---------------------------------- */
+  // onGameUpdate
+
+  useEffect(() => {
+    if (match) handleMatchUpdate();
+    // if (!form) return;
+    // if (formPending) {
+    //   setFormPending(false);
+    //   closeForm();
+    //   return;
+    // }
+    // setFormMatch(copy(match));
+    // setAlert(true);
+    // console.log('Alert: game updated');
   }, [match]);
 
   useEffect(() => {
-    if (form) closeForm();
+    if (!isDisplayed) closeForm();
   }, [isDisplayed]);
 
   useEffect(() => {
