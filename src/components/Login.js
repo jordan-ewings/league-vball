@@ -4,6 +4,7 @@ import { IonToggle } from '@ionic/react';
 
 import {
   ContCard,
+  Menu,
   MenuItem,
   Switch,
   Spinner,
@@ -16,7 +17,6 @@ import {
 
 export default function AdminAccess() {
 
-  // const [didMount, setDidMount] = useState(false);
   const { admin, controls, setControls, login, logout } = useAuth();
   const passwordRef = useRef(null);
   const [loading, setLoading] = useState(false);
@@ -36,28 +36,25 @@ export default function AdminAccess() {
       });
   }
 
-  const handleToggle = (e) => {
-    console.log('TOGGLE:', e.detail.checked);
-  }
-
   const renderFooter = () => {
     return errorMsg && <span className="invalid-msg">{errorMsg}</span>;
   }
 
   return (
-    // <div id="admin-container">
     <ContCard title="ADMIN ACCESS" footer={renderFooter()}>
       {!admin && (
         <form onSubmit={handleSignIn}>
-          <MenuItem
-            className="login-form"
-            main={<TextInput type="password" placeholder="Enter password..." ref={passwordRef} />}
-            trail={loading ? <Spinner /> : <ButtonInline icon="fa-regular fa-circle-right" onClick={handleSignIn} />}
-          />
+          <Menu>
+            <MenuItem
+              className="login-form"
+              main={<TextInput type="password" placeholder="Enter password..." ref={passwordRef} />}
+              trail={loading ? <Spinner /> : <ButtonInline icon="fa-regular fa-circle-right" onClick={handleSignIn} />}
+            />
+          </Menu>
         </form>
       )}
       {admin && (
-        <>
+        <Menu>
           <MenuItem
             className="logged-in-form"
             main="Enable Controls"
@@ -67,9 +64,8 @@ export default function AdminAccess() {
             className="logout-form"
             main={<ButtonInline text="Logout" onClick={logout} />}
           />
-        </>
+        </Menu>
       )}
     </ContCard>
-    // </div>
   );
 }

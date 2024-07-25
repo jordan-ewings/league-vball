@@ -1,9 +1,10 @@
-import React, { useMemo } from 'react';
-import { useOptions } from '../contexts/SessionContext';
-import { useFirebaseCache } from '../firebase/useFirebase';
+import React, { useEffect, useMemo } from 'react';
+import { useOptions, useLeague } from '../contexts/SessionContext';
+import { useFirebase, useLeaguePaths, useTeams } from '../firebase/useFirebase';
 
 import {
   ContCard,
+  Menu,
   RadioMenuItem,
   TeamLabel,
 } from '../components/common';
@@ -13,42 +14,38 @@ import {
 
 export default function TeamSelect() {
 
+  const { leagueId } = useLeague();
   const { favTeam, setFavTeam } = useOptions();
-  const teams = useFirebaseCache('teams', raw => {
-    const data = Object.values(raw).map(team => {
-      return {
-        id: team.id,
-        name: team.name,
-        nbr: team.nbr,
-      };
-    });
+  const { data: teams } = useTeams();
 
-    data.sort((a, b) => {
-      if (a.name === favTeam) return -1;
-      if (b.name === favTeam) return 1;
-      return 0;
-    });
-    return data;
-  });
+  if (!leagueId) return null;
 
   return (
-    // <div id="team-select-container">
     <ContCard title="MY TEAM" loading={!teams}>
-      <div className="radio-menu">
-        {teams && teams.map(team => {
-          const isFav = team.name == favTeam;
-          return (
-            <RadioMenuItem
-              key={team.id}
-              title={<TeamLabel team={team} />}
-              selected={isFav}
-              onClick={() => setFavTeam(isFav ? null : team.name)}
-            />
-          );
-        })}
-      </div>
+      <Menu>
+        {teams && Object.values(teams)
+          .sort((a, b) => {
+            if (a.name === favTeam) return -1;
+            if (b.name === favTeam) return 1;
+            return 0;
+          })
+          .map(team => {
+            const isFav = team.name == favTeam;
+            return (
+              <RadioMenuItem
+                key={team.id}
+                title={<TeamLabel team={team} />}
+                selected={isFav}
+                onClick={() => setFavTeam(isFav ? null : team.name)}
+              />
+            );
+          })}
+      </Menu>
     </ContCard>
-    // </div>
   );
 }
+
+/* ---------------------------------- */
+
+
 

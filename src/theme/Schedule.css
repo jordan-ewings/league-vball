@@ -35,6 +35,14 @@
   font-weight: 600;
 }
 
+/* ---------------------------------- */
+
+.no-games-msg {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--ios-text-secondary);
+}
+
 /* GameItem ---------------------------------------- */
 
 .game-separator {
@@ -82,7 +90,8 @@
   opacity: 1;
 }
 
-.game-item .status-bar.cancelled {
+.game-item.cncl .status-bar,
+.game-item.legend .status-bar {
   width: 1.5px;
   background-color: var(--ios-red);
 }
@@ -209,8 +218,8 @@
   color: var(--ios-red);
 }
 
-.game-item.view .match-item.post,
-.game-item.view .match-item.cncl {
+.game-item.view.post .match-item,
+.game-item.view.cncl .match-item {
   color: transparent;
 }
 

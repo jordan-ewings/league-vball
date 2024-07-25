@@ -2,7 +2,9 @@
 // Schedule
 
 import React, { useState, useEffect, useMemo, useCallback, memo, useRef, useLayoutEffect } from 'react';
-import { useFirebase, useFirebaseCache } from '../firebase/useFirebase';
+import { onChildAdded, ref, off, set, get } from 'firebase/database';
+import { db } from '../firebase/firebase';
+import { useFirebase, useWeeks, useTeams, useFirebaseCache, useLeaguePaths, useGames, store, readAllGames } from '../firebase/useFirebase';
 import { useAuth } from '../contexts/SessionContext';
 import {
   MainHeader,
@@ -11,79 +13,104 @@ import {
   CheckboxButton,
 } from './common';
 
+import { Fade } from 'react-bootstrap';
+
 import GameItem from './GameItem';
 
 /* ---------------------------------- */
 
 export default function WeekGames({ weekId }) {
 
-  const { controls } = useAuth();
-  const gamesByTime = useWeekGamesData(weekId);
+  const weeks = useWeeks();
 
   return (
     <div className="week-games col-12 col-sm-8">
-      {gamesByTime && Object.entries(gamesByTime).map(([time, games]) => (
-        <ContCard key={time} className="game-group">
-          <GameItem game={games[0]} readOnly={!controls} />
-          {games[1] && <GameItem game={games[1]} readOnly={!controls} />}
-        </ContCard>
-      ))
-      }
-      <ContCard className="game-group legend" title="LEGEND">
-        <div className="game-item legend">
-          <div className="vstack gap-1">
-            <div className="legend-item hstack">
-              <span>Winner</span>
-              <div className="legend-key">
-                <CheckboxButton className="match-item result" checked={true} disabled={true} />
-              </div>
-            </div>
-            <div className="legend-item hstack">
-              <span>Not entered</span>
-              <div className="legend-key">
-                <CheckboxButton className="match-item result" checked={false} disabled={true} />
-              </div>
-            </div>
-            <div className="legend-item hstack">
-              <span>Both games cancelled</span>
-              <div className="legend-key">
-                <div className="vr status-bar cancelled"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </ContCard>
-    </div >
+      {Object.values(weeks.data).map(week => (
+        <WeekGamesItem key={week.id} weekId={week.id} show={week.id === weekId} />
+      ))}
+    </div>
   );
 }
 
 /* ---------------------------------- */
 
-function useWeekGamesData(weekId) {
+function WeekGamesItem({ weekId, show = false }) {
 
-  const teams = useFirebaseCache('teams');
-  const games = useFirebaseCache('games', raw => {
-    if (!teams) return null;
-    if (!weekId) return null;
+  const { controls } = useAuth();
+  const games = useGames(weekId);
+  const gamesByTime = useMemo(() => getGamesByTime(games), [games]);
 
-    const data = Object.values(raw[weekId]);
-    data.forEach(game => {
-      Object.keys(game.teams).forEach(teamId => {
-        const team = teams[teamId];
-        game.teams[teamId] = {
-          id: team.id,
-          nbr: team.nbr,
-          name: team.name,
-        };
-      });
-    });
+  if (!gamesByTime) {
+    return show ? <SpinnerBlock align="center" size="3rem" /> : null;
+  }
 
-    const times = data.map(g => g.time).filter((v, i, a) => a.indexOf(v) === i);
-    return times.reduce((acc, time) => {
-      acc[time] = data.filter(g => g.time === time);
-      return acc;
-    }, {});
-  });
-
-  return games;
+  return (
+    <div className={show ? '' : 'd-none'}>
+      <Fade in={show} appear={true}>
+        <div>
+          {Object.entries(gamesByTime).map(([time, games]) => (
+            <ContCard key={time} className="game-group">
+              <GameItem game={games[0]} readOnly={!controls} isDisplayed={show} />
+              {games[1] && <GameItem game={games[1]} readOnly={!controls} isDisplayed={show} />}
+            </ContCard>
+          ))}
+          {gamesByTime.length !== 0 && <GameItemLegend />}
+          {gamesByTime.length === 0 && (
+            <div className="d-flex justify-content-center no-games-msg">
+              <span>No games scheduled</span>
+            </div>
+          )}
+        </div>
+      </Fade >
+    </div>
+  );
 }
+
+/* ---------------------------------- */
+
+function getGamesByTime(games) {
+  if (games.loading) return null;
+  const weekId = games.reference.split('/').slice(-1)[0];
+  const gamesArr = Object.entries(games.data).map(([gameId, game]) => {
+    return { ...game, weekId, gameId, ref: games.reference + '/' + gameId };
+  });
+  const times = gamesArr.map(g => g.time).filter((v, i, a) => a.indexOf(v) === i);
+  const timeGames = times.reduce((acc, time) => {
+    acc[time] = gamesArr.filter(g => g.time === time);
+    return acc;
+  }, {});
+  return timeGames;
+}
+
+/* ---------------------------------- */
+
+function GameItemLegend() {
+
+  return (
+    <ContCard className="game-group legend" title="LEGEND">
+      <div className="game-item legend">
+        <div className="vstack gap-1">
+          <div className="legend-item hstack">
+            <span>Winner</span>
+            <div className="legend-key">
+              <CheckboxButton className="match-item result" checked={true} disabled={true} />
+            </div>
+          </div>
+          <div className="legend-item hstack">
+            <span>Not entered</span>
+            <div className="legend-key">
+              <CheckboxButton className="match-item result" checked={false} disabled={true} />
+            </div>
+          </div>
+          <div className="legend-item hstack">
+            <span>Both games cancelled</span>
+            <div className="legend-key">
+              <div className="vr status-bar cancelled"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ContCard>
+  );
+}
+

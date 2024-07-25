@@ -2,7 +2,8 @@
 // Schedule
 
 import React, { useState, useEffect, useMemo, useCallback, memo, useRef, useLayoutEffect } from 'react';
-import { useFirebase, useFirebaseCache } from '../firebase/useFirebase';
+import { useLeaguePaths, useFirebase, useWeeks, useFirebaseCache, store } from '../firebase/useFirebase';
+import { Storage } from '../contexts/SessionContext';
 import { isPlatform } from '@ionic/react';
 import { MainHeader, SpinnerBlock } from '../components/common';
 import WeekGames from '../components/WeekGames';
@@ -12,16 +13,20 @@ import WeekButtons from '../components/WeekFilter';
 
 export default function Schedule() {
 
-  const currentWeek = useCurrentWeek();
+  const { data: weeks } = useWeeks();
+  const currentWeek = getCurrentWeek(weeks);
   const [activeWeek, setActiveWeek] = useState(null);
 
   useEffect(() => {
-    if (currentWeek) {
-      setActiveWeek(currentWeek);
-    }
+    if (currentWeek) setActiveWeek(Storage.getExpire('lastWeek') || currentWeek);
   }, [currentWeek]);
 
-  if (!activeWeek) return <SpinnerBlock align="center" size="3rem" />;
+  // store last week for one hour
+  useEffect(() => {
+    if (activeWeek) Storage.setExpire('lastWeek', activeWeek, 1000 * 60 * 60);
+  }, [activeWeek]);
+
+  if (!weeks) return <SpinnerBlock align="center" size="3rem" />;
 
   return (
     <div className="page">
@@ -37,16 +42,14 @@ export default function Schedule() {
 
 /* ---------------------------------- */
 
-function useCurrentWeek() {
-
-  return useFirebaseCache('weeks', raw => {
-    const weeks = Object.values(raw);
-    const finalWeek = weeks.pop();
-    const nextWeek = weeks.find(week => {
-      const today = new Date().setHours(0, 0, 0, 0);
-      const gameday = new Date(week.gameday).setHours(0, 0, 0, 0);
-      return gameday > today;
-    });
-    return nextWeek ? nextWeek.id : finalWeek.id;
+function getCurrentWeek(weeks) {
+  if (!weeks) return null;
+  const today = new Date().setHours(0, 0, 0, 0);
+  const weeksArr = Object.values(weeks);
+  const nextWeek = weeksArr.find(week => {
+    const gameday = new Date(week.gameday).setHours(0, 0, 0, 0);
+    return gameday > today;
   });
+
+  return nextWeek ? nextWeek.id : weeksArr.pop().id;
 }

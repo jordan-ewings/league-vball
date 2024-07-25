@@ -2,12 +2,13 @@ import React, { useState, useEffect, useMemo, useCallback, memo, useRef, createR
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useAuth, useLeague, useOptions, useNavHidden } from '../contexts/SessionContext';
 import { toggleNav } from '../components/Navbar';
-import { useFirebase, useFirebaseCache } from '../firebase/useFirebase';
+import { useLeaguePaths, useFirebase, useTeams, useWeeks, useStats, useFirebaseCache } from '../firebase/useFirebase';
 import { get, child, ref, onValue, off, set, update, increment } from "firebase/database";
 
 import {
   MainHeader,
   ContCard,
+  Menu,
   MenuItem,
   TeamLabel,
   ButtonInline,
@@ -20,25 +21,35 @@ import { db } from '../firebase/firebase';
 
 export default function WeekStats() {
 
-  const { weekId } = useParams();
-  const { leagueId } = useLeague();
-  const { controls } = useAuth();
-  const weeks = useFirebaseCache('weeks');
-  const teams = useFirebaseCache('teams');
-  const [updates, setUpdates] = useState({});
   const navigate = useNavigate();
+  const { weekId } = useParams();
+  const { controls } = useAuth();
+  const refs = useLeaguePaths();
+  const { data: teams } = useTeams();
+  const { data: week } = useWeeks(weekId);
+  const { data: teamDrinks } = useStats('drinks', weekId);
+  const [updates, setUpdates] = useState({});
 
   useEffect(() => {
     toggleNav(false);
     return () => toggleNav(true);
   }, []);
 
-  useEffect(() => {
-    console.log('updates:', updates);
-  }, [updates]);
+  const handleSave = async () => {
+    try {
+      console.log('updates:', updates);
+      await update(ref(db), updates);
+      setUpdates({});
+    } catch (error) {
+      console.error('Error updating stats:', error);
+    }
+  }
 
-  const handleSave = () => {
-    return update(ref(db), updates);
+  const getTeamDrinks = (teamId) => {
+    if (teamDrinks && teamDrinks[teamId]) {
+      return teamDrinks[teamId].count;
+    }
+    return null;
   }
 
   /* ---------------------------------- */
@@ -48,22 +59,25 @@ export default function WeekStats() {
     <div className="page">
       <MainHeader>
         <MainHeader.BackButton onClick={() => navigate('/standings', { state: { from: 'stats' } })} />
-        <MainHeader.Title text={weeks && weeks[weekId] ? weeks[weekId].label : 'Week'} />
+        <MainHeader.Title text={week ? week.label : 'Week'} />
         {controls && <MainHeader.SaveButton onClick={handleSave} disabled={Object.keys(updates).length == 0} />}
       </MainHeader>
       <div className="main-body vstack align-items-center">
         <div className="col-12 col-md-8">
           <ContCard title="TEAM DRINKS" loading={!teams}>
-            {teams && Object.values(teams).map(team => (
-              <TeamDrinksItem
-                key={team.id}
-                team={team}
-                refWeekStat={`stats/${leagueId}/${weekId}/${team.id}/drinks/count`}
-                refTeamStat={`teams/${leagueId}/${team.id}/stats/drinks/count`}
-                setUpdates={setUpdates}
-                readOnly={!controls}
-              />
-            ))}
+            <Menu>
+              {teams && teamDrinks && Object.values(teams).map(team => (
+                <TeamDrinksItem
+                  key={team.id}
+                  team={team}
+                  drinks={getTeamDrinks(team.id)}
+                  refWeekStat={refs.stats('drinks', weekId, team.id, 'count')}
+                  refTeamStat={refs.stats('drinks', 'ALL', team.id, 'count')}
+                  setUpdates={setUpdates}
+                  readOnly={!controls}
+                />
+              ))}
+            </Menu>
           </ContCard>
         </div>
       </div>
@@ -73,9 +87,7 @@ export default function WeekStats() {
 
 /* ---------------------------------- */
 
-const TeamDrinksItem = memo(function TeamDrinksItem({ team, refWeekStat, refTeamStat, setUpdates, readOnly }) {
-
-  const drinks = useFirebase(refWeekStat);
+function TeamDrinksItem({ team, drinks, refWeekStat, refTeamStat, setUpdates, readOnly }) {
 
   const handleStepperChange = (newValue) => {
     const change = newValue - drinks;
@@ -92,12 +104,6 @@ const TeamDrinksItem = memo(function TeamDrinksItem({ team, refWeekStat, refTeam
     });
   }
 
-  useEffect(() => {
-    if (drinks !== null) {
-      handleStepperChange(drinks);
-    }
-  }, [drinks]);
-
   return (
     <MenuItem
       className="team-drinks-item"
@@ -105,4 +111,4 @@ const TeamDrinksItem = memo(function TeamDrinksItem({ team, refWeekStat, refTeam
       trail={drinks !== null && <Stepper initialValue={drinks} onChange={handleStepperChange} disabled={readOnly} />}
     />
   );
-});
+}

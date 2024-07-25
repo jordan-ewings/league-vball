@@ -10,8 +10,10 @@ import {
   banOutline,
 } from 'ionicons/icons';
 
+import { Collapse } from 'react-bootstrap';
+
 import { useOptions, useLeague } from '../contexts/SessionContext';
-import { useFirebase } from '../firebase/useFirebase';
+import { useFirebase, useStats } from '../firebase/useFirebase';
 
 /* ---------------------------------- */
 // stdChild
@@ -95,10 +97,10 @@ MainHeader.SaveButton = function MainHeaderSaveButton({ onClick, disabled = fals
 /* ---------------------------------- */
 // ContCard
 
-export function ContCard({ children, title, footer, className = '', loading = false }) {
+export function ContCard({ children, title, footer, loading, ...props }) {
 
   return (
-    <div className={`cont-card ${className}`}>
+    <div className={getClassName('cont-card', props)}>
       <div className="cont-card-title">{stdChild(title)}</div>
       <div className="cont-card-body">
         {loading
@@ -113,17 +115,83 @@ export function ContCard({ children, title, footer, className = '', loading = fa
 /* ---------------------------------- */
 // MenuItem
 
-export function MenuItem({ className = '', icon, main, info, trail, nav = false, onClick }) {
+// export function MenuItem({ className = '', icon, main, trail, nav = false, onClick }) {
+
+//   return (
+//     <div className={`menu-item ${className}`} {...(onClick && { role: 'button' })} onClick={onClick}>
+//       <div className="label">
+//         {icon}
+//       </div>
+//       <div className="contents vstack justify-content-center">
+//         <div className="hstack">
+//           <div className="main hstack flex-grow-1 flex-shrink-1 overflow-hidden">{stdChild(main)}</div>
+//           <div className="trail hstack flex-grow-0 flex-shrink-0">
+//             {stdChild(trail)}
+//             {nav && <div className="drill"><i className="fa-solid fa-chevron-right"></i></div>}
+//           </div>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
+
+function getClassName(base, props) {
+  let classNames = base;
+  if ('className' in props) classNames += ` ${props.className}`;
+  return classNames;
+}
+
+// added classes to props (if props has className, append classes to it)
+// return new props object
+function getPropsWith(props, classUpdate) {
+  return { ...props, className: ('className' in props) ? [classUpdate, props.className].join(' ') : classUpdate };
+}
+
+/* ---------------------------------- */
+
+
+export function Menu({ children, ...props }) {
+  return (
+    <div {...getPropsWith(props, 'menu')}>
+      {children}
+    </div>
+  );
+}
+
+// menu with one menu item that, when clicked, expands to show a sub-menu with additional items
+export function MenuCollapsible({ children, title, expanded, inactive, onClick }) {
+
+  const open = expanded ? true : false;
 
   return (
-    <div className={`menu-item ${className}`} {...(onClick && { role: 'button' })} onClick={onClick}>
-      <div className="label">
-        {icon}
-      </div>
+    <div className="menu menu-collapsible">
+      <MenuItem
+        main={title}
+        trail={<i className={`fa-solid fa-chevron-${open ? 'up' : 'down'}`}></i>}
+        onClick={() => onClick(!expanded)}
+        role="button"
+        inactive={inactive}
+      />
+      <Collapse in={open}>
+        <div>
+          <Menu>{children}</Menu>
+        </div>
+      </Collapse>
+    </div>
+  );
+}
+
+
+export function MenuItem({ main, trail, nav, ...props }) {
+
+  const classUpdates = ['menu-item'];
+  if (props.inactive) classUpdates.push('inactive');
+
+  return (
+    <div {...getPropsWith(props, classUpdates.join(' '))}>
       <div className="contents vstack justify-content-center">
         <div className="hstack">
           <div className="main hstack flex-grow-1 flex-shrink-1 overflow-hidden">{stdChild(main)}</div>
-          <div className="info hstack">{stdChild(info)}</div>
           <div className="trail hstack flex-grow-0 flex-shrink-0">
             {stdChild(trail)}
             {nav && <div className="drill"><i className="fa-solid fa-chevron-right"></i></div>}
@@ -131,6 +199,24 @@ export function MenuItem({ className = '', icon, main, info, trail, nav = false,
         </div>
       </div>
     </div>
+  );
+}
+
+/* ---------------------------------- */
+// RadioMenuItem
+
+export function RadioMenuItem({ title, selected, ...props }) {
+
+  const classUpdates = ['radio-menu-item'];
+  if (selected) classUpdates.push('selected');
+
+  return (
+    <MenuItem
+      {...getPropsWith(props, classUpdates.join(' '))}
+      main={title}
+      trail={<CheckboxButton checked={selected} />}
+      role="button"
+    />
   );
 }
 
@@ -157,52 +243,29 @@ export function IconButton({ icon, color, raised = true, onClick, hide = false, 
 /* ---------------------------------- */
 // CheckboxButton
 
-export function CheckboxButton({ checked, disabled, size, xMark = false, className = '', onClick }) {
+export function CheckboxButton({ checked, disabled, ...props }) {
 
-  const handleClick = () => {
-    if (onClick && !disabled) onClick();
-  }
-
-  let classNames = 'checkbox';
-  if (checked) classNames += ' checked';
-  if (disabled) classNames += ' disabled';
-  if (className) classNames += ` ${className}`;
+  const classUpdates = ['checkbox'];
+  if (checked) classUpdates.push('checked');
+  if (disabled) classUpdates.push('disabled');
 
   return (
-    <div className={classNames} role="button" onClick={handleClick}>
-      <IonIcon
-        icon={
-          (checked && !xMark) ? checkmarkCircle :
-            (xMark) ? banOutline :
-              ellipseOutline}
-      />
+    <div {...getPropsWith(props, classUpdates.join(' '))} role="button">
+      <IonIcon icon={checked ? checkmarkCircle : ellipseOutline} />
     </div>
   );
 }
 
-/* ---------------------------------- */
-// RadioMenuItem
 
-export function RadioMenuItem({ title, selected = false, onClick }) {
-
-  return (
-    <MenuItem
-      className={`radio-menu-item ${selected ? 'selected' : ''}`}
-      main={title}
-      onClick={onClick}
-      trail={<CheckboxButton checked={selected} onClick={onClick} />}
-    />
-  )
-}
 
 /* ---------------------------------- */
 // TeamLabel
 
 export function TeamLabel({ team, withRecord = false }) {
   const { favTeam } = useOptions();
-  const { leagueId } = useLeague();
-  const recordPath = withRecord ? `teams/${leagueId}/${team.id}/stats/games/record` : null;
-  const record = useFirebase(recordPath);
+  const s = useStats('games', 'ALL');
+  const stats = (!s.loading) ? s.data : null;
+  const record = (stats && stats[team.id] && withRecord) ? stats[team.id].record : null;
 
   return (
     <div className="team-label">
@@ -281,6 +344,10 @@ export function Stepper({ initialValue, onChange, disabled = false }) {
     setValue(newValue);
     onChange(newValue);
   }
+
+  useEffect(() => {
+    setValue(initialValue);
+  }, [initialValue]);
 
   return (
     <div className={`stepper ${change != 0 ? 'changed' : ''}`}>

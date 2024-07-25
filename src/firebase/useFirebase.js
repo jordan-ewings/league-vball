@@ -1,243 +1,50 @@
 import React, { useState, useEffect, useSyncExternalStore, useRef, useMemo } from "react";
-import { get, off, child, ref, onValue, set, update } from "firebase/database";
+import { get, off, child, ref, onValue, set, update, onChildAdded, onChildChanged } from "firebase/database";
 import { db } from "./firebase";
 import { useLeague } from "../contexts/SessionContext";
+import { type } from "@testing-library/user-event/dist/type";
 
 /* ---------------------------------- */
 
-const cache = new Map();
-const store = new Map();
+export const store = new Map();
 const subscribers = new Map();
 const listeners = new Set();
 
 /* ---------------------------------- */
 // initFirebaseStore
 
-export function initFirebaseStore() {
+export function initFirebaseStore(leagueId) {
 
-  listeners.forEach((ref) => off(ref));
+  listeners.forEach((unsub) => unsub());
   listeners.clear();
   subscribers.clear();
   store.clear();
-  cache.clear();
-}
 
-/* ---------------------------------- */
-// useFunctions
-
-export function useFunctions() {
-
-  const refs = useLeaguePaths();
-
-  const matchesFromGames = (games) => {
-    const result = [];
-    Object.entries(games).forEach(([wId, wGames]) => {
-      Object.entries(wGames).forEach(([gId, game]) => {
-        Object.entries(game.matches).forEach(([mId, match]) => {
-          result.push({
-            weekId: wId,
-            gameId: gId,
-            matchId: mId,
-            ...game,
-            ...match
-          });
-        });
-      });
-    });
-
-    return result;
-  };
-
-  const teamStatsFromGames = (games, teamId, weekId) => {
-    const matchData = matchesFromGames(games).filter(m => m.teams[teamId] && m.status === 'POST');
-    const data = weekId ? matchData.filter(m => m.weekId === weekId) : matchData;
-    const count = data.length;
-    const wins = (count > 0) ? data.filter(m => m.winner === teamId).length : 0;
-    const losses = count - wins;
-    const record = `${wins}-${losses}`;
-    const winPct = (count > 0) ? wins / count : 0;
-
-    return { count, wins, losses, record, winPct };
-  };
-
-  const updateGameMatches = async (weekId, gameId, newMatches, updateRecords = true) => {
-
-    const updates = {};
-    updates[refs.games(weekId, gameId, 'matches')] = newMatches;
-
-    if (updateRecords === false) {
-      console.log('updateGameMatches:', updates);
-      return update(ref(db), updates).then(() => {
-        console.log('updateGameMatches: success');
-      }).catch((error) => {
-        console.error('updateGameMatches: error', error);
-      });
-    }
-
-    const games = await getFirebase(refs.games());
-    const game = games[weekId][gameId];
-    game.matches = newMatches;
-    Object.keys(game.teams).forEach(teamId => {
-      updates[refs.teams(teamId, 'stats', 'games')] = teamStatsFromGames(games, teamId);
-      updates[refs.stats(weekId, teamId, 'games')] = teamStatsFromGames(games, teamId, weekId);
-    });
-
-    console.log('updateGameMatches:', updates);
-    update(ref(db), updates).then(() => {
-      console.log('updateGameMatches: success');
-    }).catch((error) => {
-      console.error('updateGameMatches: error', error);
-    });
-  };
-
-  return {
-    matchesFromGames,
-    teamStatsFromGames,
-    updateGameMatches,
-  };
-}
-
-/* ---------------------------------- */
-// getFirebase
-
-export async function getFirebase(reference, transform) {
-
-  const result = await get(child(ref(db), reference)).then(s => {
-    const data = s.val();
-    if (data !== null && data !== undefined) {
-      if (transform) {
-        if (transform === 'array') {
-          return Object.values(data);
-        }
-        return transform(data);
-      } else {
-        return data;
-      }
-    }
-    return null;
-  });
-
-  return result;
-}
-
-/* ---------------------------------- */
-// useLeaguePaths
-
-export function useLeaguePaths() {
-
-  const { leagueId } = useLeague();
-  const paths = useMemo(() => {
-    return {
-      weeks: (weekId, ...nodes) => parseReference(makePath('weeks', [weekId, ...nodes]), leagueId),
-      games: (weekId, gameId, ...nodes) => parseReference(makePath('games', [weekId, gameId, ...nodes]), leagueId),
-      teams: (teamId, ...nodes) => parseReference(makePath('teams', [teamId, ...nodes]), leagueId),
-      stats: (weekId, teamId, ...nodes) => parseReference(makePath('stats', [weekId, teamId, ...nodes]), leagueId),
-    }
-  }, [leagueId]);
-
-  return paths;
-}
-
-/* ---------------------------------- */
-// useFirebaseCache
-
-export function useFirebaseCache(reference, transform) {
-
-  const { leagueId } = useLeague();
-  const path = useMemo(() => parseReference(reference, leagueId), [reference, leagueId]);
-  const data = _useFirebaseCache(path);
-  const result = useMemo(() => {
-    if (data !== null && data !== undefined) {
-      return transform ? transform(data) : data;
-    }
-    return null;
-  }, [data, transform]);
-
-  return result;
-}
-
-function _useFirebaseCache(reference) {
-
-  const [data, setData] = useState(cache.get(reference));
-
-  useEffect(() => {
-    if (reference) {
-      const cacheData = readCache(reference);
-      if (cacheData) {
-        setData(cacheData);
-        return;
-      }
-      const storeData = readStore(reference);
-      if (storeData) {
-        cache.set(reference, storeData);
-        console.log(`cache from store ${reference}:`, storeData);
-        setData(storeData);
-        return;
-      }
-      get(child(ref(db), reference)).then((snapshot) => {
-        const data = snapshot.val();
-        cache.set(reference, data);
-        console.log(`cache from fetch ${reference}:`, data);
-        setData(data);
-      });
-    }
-  }, [reference]);
-
-  return data;
+  console.log('initFirebaseStore:', leagueId);
+  if (leagueId) {
+    initLeague(leagueId);
+    initTeams(leagueId);
+    initWeeks(leagueId);
+    initStats(leagueId);
+    initGames(leagueId);
+  }
 }
 
 /* ---------------------------------- */
 // useFirebase
 
-export function useFirebase(reference, transform) {
+export function useFirebase(reference) {
 
-  const { leagueId } = useLeague();
-  const path = useMemo(() => parseReference(reference, leagueId), [reference, leagueId]);
-  const data = _useFirebase(path);
-  const result = useMemo(() => {
-    if (data !== null && data !== undefined) {
-      return transform ? transform(data) : data;
-    }
-    return null;
-  }, [data, transform]);
-
-  return result;
-}
-
-function _useFirebase(reference) {
-
-  initReference(reference);
   return useSyncExternalStore(
     (callback) => subscribe(reference, callback),
     () => getSnapshot(reference)
   );
 }
 
-function initReference(reference) {
-
-  if (!reference) return;
-  if (store.has(reference)) return;
-
-  store.set(reference, null);
-  const dataRef = ref(db, reference);
-  onValue(dataRef, (snapshot) => {
-    const data = snapshot.val();
-    store.set(reference, data);
-    if (subscribers.has(reference)) {
-      subscribers.get(reference).forEach((cb) => cb());
-    }
-  });
-
-  listeners.add(dataRef);
-}
-
 function subscribe(reference, callback) {
-
   if (!reference) return;
-
   if (!subscribers.has(reference)) subscribers.set(reference, new Set());
   subscribers.get(reference).add(callback);
-
   return () => {
     const callbackSet = subscribers.get(reference);
     if (callbackSet) {
@@ -254,35 +61,229 @@ function getSnapshot(reference) {
 }
 
 /* ---------------------------------- */
-// helpers
+// init firebase references
 
-function readStore(reference) {
-  if (store.has(reference)) {
-    return store.get(reference);
-  }
-  return null;
+function initSnapshot(reference, data) {
+  if (store.has(reference)) return;
+  store.set(reference, data);
 }
 
-function readCache(reference) {
-  if (cache.has(reference)) {
-    return cache.get(reference);
-  }
-  return null;
+function setSnapshot(reference, data, notify = false) {
+  store.set(reference, data);
+  if (notify) notifySubscribers(reference);
 }
 
-function parseReference(reference, leagueId) {
-  if (!reference) return null;
-  if (!leagueId) return null;
-
-  if (reference.includes(leagueId)) return reference;
-  if (reference.includes('/')) {
-    return reference.replace('/', `/${leagueId}/`);
-  }
-  return `${reference}/${leagueId}`;
+function updateSnapshot(reference, childKey, childData, notify = false) {
+  initSnapshot(reference, {});
+  const data = getSnapshot(reference);
+  const newData = { ...data, [childKey]: childData };
+  setSnapshot(reference, newData, notify);
 }
 
-function makePath(base, nodes) {
-  const parts = nodes.filter(n => n !== undefined && n !== null);
-  const ext = parts.length > 0 ? `/${parts.join('/')}` : '';
-  return `${base}${ext}`;
+function notifySubscribers(reference) {
+  if (subscribers.has(reference)) {
+    subscribers.get(reference).forEach((cb) => cb());
+  }
+}
+
+function getDataSnapPath(dataSnapshot) {
+  const fullPath = dataSnapshot.ref.toString();
+  const rootPath = dataSnapshot.ref.root.toString();
+  const path = fullPath.replace(rootPath, '');
+  return path;
+}
+
+/* ---------------------------------- */
+// initLeague
+// store leagueId
+
+function initLeague(leagueId) {
+  store.set('leagueId', leagueId);
+}
+
+/* ---------------------------------- */
+// initTeams
+
+function initTeams(leagueId) {
+  const teamsPath = makePath(leagueId, 'teams');
+  const teamAdded = onChildAdded(ref(db, teamsPath), (team) => {
+    updateSnapshot(teamsPath, team.key, team.val(), true);
+    setSnapshot(getDataSnapPath(team), team.val(), true);
+  });
+  listeners.add(teamAdded);
+}
+
+/* ---------------------------------- */
+// initWeeks
+
+function initWeeks(leagueId) {
+  const weeksPath = makePath(leagueId, 'weeks');
+  const weekAdded = onChildAdded(ref(db, weeksPath), (week) => {
+    updateSnapshot(weeksPath, week.key, week.val(), true);
+    setSnapshot(getDataSnapPath(week), week.val(), true);
+  });
+  listeners.add(weekAdded);
+}
+
+/* ---------------------------------- */
+// initStats
+
+function initStats(leagueId) {
+  const statsPath = makePath(leagueId, 'stats');
+  const statAdded = onChildAdded(ref(db, statsPath), (stat) => {
+    const statPath = statsPath + '/' + stat.key;
+    const weekAdded = onChildAdded(stat.ref, (week) => {
+      const weekPath = statPath + '/' + week.key;
+      const teamAdded = onChildAdded(week.ref, (team) => {
+        updateSnapshot(weekPath, team.key, team.val(), true);
+      });
+      const teamChanged = onChildChanged(week.ref, (team) => {
+        updateSnapshot(weekPath, team.key, team.val(), true);
+      });
+      listeners.add(teamAdded);
+      listeners.add(teamChanged);
+    });
+    listeners.add(weekAdded);
+  });
+  listeners.add(statAdded);
+}
+
+/* ---------------------------------- */
+// initGames
+
+function initGames(leagueId) {
+  const gamesPath = makePath(leagueId, 'games');
+  const weekAdded = onChildAdded(ref(db, gamesPath), (week) => {
+    const weekPath = gamesPath + '/' + week.key;
+    const gameAdded = onChildAdded(week.ref, (game) => {
+      updateSnapshot(weekPath, game.key, game.val(), true);
+    });
+    const gameChanged = onChildChanged(week.ref, (game) => {
+      updateSnapshot(weekPath, game.key, game.val(), true);
+      console.log('gameChanged:', 'week:', week.key, 'game:', game.key);
+      console.log('weekGames:', getSnapshot(weekPath));
+    });
+    listeners.add(gameAdded);
+    listeners.add(gameChanged);
+  });
+  listeners.add(weekAdded);
+}
+
+/* ---------------------------------- */
+// useNode
+// subscribe to firebase reference
+
+function useNode(root, ...nodes) {
+  const refs = useLeaguePaths();
+  const reference = refs[root](...nodes);
+  const data = useFirebase(reference);
+  const loading = data === null || data === undefined;
+  const result = useMemo(() => {
+    const r = { reference };
+    if (loading) r.loading = true;
+    if (!loading) r.data = data;
+    return r;
+  }, [loading, data, reference]);
+  return result;
+}
+
+export function useTeams(teamId) {
+  return useNode('teams', teamId);
+}
+
+export function useWeeks(weekId) {
+  return useNode('weeks', weekId);
+}
+
+export function useGames(weekId) {
+  return useNode('games', weekId);
+}
+
+export function useStats(stat, weekId) {
+  return useNode('stats', stat, weekId);
+}
+
+/* ---------------------------------- */
+// read
+
+const getLeagueId = () => getSnapshot('leagueId');
+const getStoreKeys = (matchStart) => {
+  const keys = Array.from(store.keys());
+  if (matchStart) {
+    const LID = getLeagueId();
+    const search = LID + '/' + matchStart;
+    return keys.filter(key => key.startsWith(search));
+  }
+  return keys;
+}
+
+export function readAllGames() {
+  const weekGamesKeys = getStoreKeys('games');
+  const games = weekGamesKeys.reduce((acc, weekPath) => {
+    const weekId = weekPath.split('/').slice(-1)[0];
+    const weekGames = getSnapshot(weekPath);
+    Object.entries(weekGames).forEach(([gameId, game]) => {
+      const path = weekPath + '/' + gameId;
+      acc[path] = { ...game, weekId, gameId, ref: path };
+    });
+    return acc;
+  }, {});
+
+  return games;
+}
+
+/* ---------------------------------- */
+// LOGGING of store (testing)
+
+export function useStore() {
+
+  const teams = useTeams();
+  const weeks = useWeeks();
+  const games = useGames('WK01');
+  const stats = useStats('games', 'ALL');
+
+  return {
+    teams,
+    weeks,
+    games,
+    stats,
+    store,
+  };
+}
+
+/* ---------------------------------- */
+// useLeaguePaths
+
+export function useLeaguePaths() {
+
+  const { leagueId } = useLeague();
+  const [paths, setPaths] = useState({
+    weeks: (weekId, ...nodes) => makePath(leagueId, ['weeks', weekId, ...nodes]),
+    games: (weekId, gameIndex, ...nodes) => makePath(leagueId, ['games', weekId, gameIndex, ...nodes]),
+    teams: (teamId, ...nodes) => makePath(leagueId, ['teams', teamId, ...nodes]),
+    stats: (stat, weekId, teamId, ...nodes) => makePath(leagueId, ['stats', stat, weekId, teamId, ...nodes]),
+  });
+
+  useEffect(() => {
+    if (leagueId) {
+      setPaths({
+        weeks: (weekId, ...nodes) => makePath(leagueId, ['weeks', weekId, ...nodes]),
+        games: (weekId, gameIndex, ...nodes) => makePath(leagueId, ['games', weekId, gameIndex, ...nodes]),
+        teams: (teamId, ...nodes) => makePath(leagueId, ['teams', teamId, ...nodes]),
+        stats: (stat, weekId, teamId, ...nodes) => makePath(leagueId, ['stats', stat, weekId, teamId, ...nodes]),
+      });
+    }
+  }, [leagueId]);
+
+  return paths;
+}
+
+/* ---------------------------------- */
+// makePath
+
+function makePath(leagueId, nodes) {
+  const nodesArr = Array.isArray(nodes) ? nodes : [nodes];
+  const parts = nodesArr.filter(n => n !== undefined && n !== null);
+  const ext = parts.length > 0 ? '/' + parts.join('/') : '';
+  return (leagueId) ? leagueId + ext : null;
 }

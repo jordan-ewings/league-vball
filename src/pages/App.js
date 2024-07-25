@@ -5,7 +5,7 @@ import React from 'react'; // npm install react
 import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom'; // npm install react-router-dom
 import { CSSTransition, SwitchTransition } from 'react-transition-group'; // npm install react-transition-group
 
-import { ContextProvider } from '../contexts/SessionContext';
+import { ContextProvider, useLeague } from '../contexts/SessionContext';
 import Navbar from '../components/Navbar';
 import Home from './Home';
 import Standings from './Standings';
@@ -38,6 +38,9 @@ export default function App() {
 const AnimatedRoutes = () => {
 
   const location = useLocation();
+  // const { leagueId } = useLeague();
+
+  // if (!leagueId) return null;
 
   return (
     <SwitchTransition mode="out-in">

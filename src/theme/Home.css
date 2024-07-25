@@ -1,0 +1,10 @@
+.ss-label {
+  display: inline-flex;
+  align-items: center;
+  column-gap: .5rem;
+}
+
+.ss-label .ss-session {
+  font-weight: 300;
+  color: var(--ios-text-tertiary);
+}

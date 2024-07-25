@@ -3,13 +3,15 @@
 
 import React, { useState, useEffect, useMemo, useCallback, memo, useRef, useLayoutEffect } from 'react';
 import { Button, ButtonGroup } from 'react-bootstrap';
-import { useFirebase, useFirebaseCache } from '../firebase/useFirebase';
+import { useFirebase, useWeeks, useFirebaseCache } from '../firebase/useFirebase';
+import { useAuth } from '../contexts/SessionContext';
 
 /* ---------------------------------- */
 
 export default function WeekButtons({ activeWeek, setActiveWeek }) {
 
-  const weeks = useFirebaseCache('weeks', (raw) => Object.values(raw));
+  const { controls } = useAuth();
+  const weeks = useWeeks();
   const formatDate = (str) => new Date(str).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
   useLayoutEffect(() => {
@@ -21,11 +23,11 @@ export default function WeekButtons({ activeWeek, setActiveWeek }) {
 
   /* -------------------- */
   // render
-
+  // add week button at end if controls
   return (
     <div className="week-filter">
       <ButtonGroup className="week-filter-btn-group">
-        {weeks && weeks.map(({ id, label, gameday }) => (
+        {Object.values(weeks.data).map(({ id, label, gameday }) => (
           <Button key={id} className="week-filter-btn" variant={null} active={id == activeWeek} onClick={() => setActiveWeek(id)}>
             <span className="week-btn-label">{label}</span>
             <span className="week-btn-date">{formatDate(gameday)}</span>
