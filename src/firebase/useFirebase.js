@@ -160,8 +160,6 @@ function initGames(leagueId) {
     });
     const gameChanged = onChildChanged(week.ref, (game) => {
       updateSnapshot(weekPath, game.key, game.val(), true);
-      console.log('gameChanged:', 'week:', week.key, 'game:', game.key);
-      console.log('weekGames:', getSnapshot(weekPath));
     });
     listeners.add(gameAdded);
     listeners.add(gameChanged);
