@@ -38,9 +38,9 @@ export default function App() {
 const AnimatedRoutes = () => {
 
   const location = useLocation();
-  // const { leagueId } = useLeague();
+  const { leagueId } = useLeague();
 
-  // if (!leagueId) return null;
+  if (!leagueId) return null;
 
   return (
     <SwitchTransition mode="out-in">
