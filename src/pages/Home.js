@@ -14,9 +14,9 @@ import { useStore, store, readAllGames } from '../firebase/useFirebase';
 
 export default function Home() {
 
-  const store = useStore();
-  const games = readAllGames();
-  console.log('games:', games);
+  // const store = useStore();
+  // const games = readAllGames();
+  // console.log('games:', games);
   // console.log('store:', store);
 
   return (

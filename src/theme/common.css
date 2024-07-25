@@ -132,6 +132,12 @@
   border-top: .5px solid var(--ios-separator-nonopaque);
 }
 
+.menu-collapsible>.menu-item .trail {
+  color: var(--ios-text-tertiary);
+  font-size: .9rem;
+  font-weight: 500;
+}
+
 .menu-item-list {
   display: flex;
   flex-direction: column;
@@ -151,7 +157,7 @@
   overflow: hidden;
 }
 
-.menu-item.inactive .contents .main {
+.menu-item.inactive .contents {
   color: var(--ios-text-tertiary);
 }
 
@@ -223,7 +229,7 @@
 
 .checkbox.checked {
   color: var(--ios-blue);
-  transition: color 0.1s ease-in-out;
+  /* transition: color 0.1s ease-in-out; */
 }
 
 .checkbox>ion-icon {

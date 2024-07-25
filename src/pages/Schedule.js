@@ -18,8 +18,21 @@ export default function Schedule() {
   const [activeWeek, setActiveWeek] = useState(null);
 
   useEffect(() => {
-    if (currentWeek) setActiveWeek(Storage.getExpire('lastWeek') || currentWeek);
-  }, [currentWeek]);
+    if (currentWeek) {
+      // setActiveWeek(Storage.getExpire('lastWeek') || currentWeek);
+      const storedWeek = Storage.getExpire('lastWeek');
+      if (storedWeek) {
+        if (weeks[storedWeek]) {
+          setActiveWeek(storedWeek);
+        } else {
+          Storage.remove('lastWeek');
+          setActiveWeek(currentWeek);
+        }
+      } else {
+        setActiveWeek(currentWeek);
+      }
+    }
+  }, [currentWeek, weeks]);
 
   // store last week for one hour
   useEffect(() => {

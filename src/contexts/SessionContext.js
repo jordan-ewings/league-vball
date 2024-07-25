@@ -44,6 +44,10 @@ export class Storage {
     }
     return value;
   }
+
+  static remove(key) {
+    localStorage.removeItem(key);
+  }
 }
 
 /* ---------------------------------- */

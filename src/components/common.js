@@ -182,10 +182,10 @@ export function MenuCollapsible({ children, title, expanded, inactive, onClick }
 }
 
 
-export function MenuItem({ main, trail, nav, ...props }) {
+export function MenuItem({ main, trail, nav, inactive, ...props }) {
 
   const classUpdates = ['menu-item'];
-  if (props.inactive) classUpdates.push('inactive');
+  if (inactive) classUpdates.push('inactive');
 
   return (
     <div {...getPropsWith(props, classUpdates.join(' '))}>

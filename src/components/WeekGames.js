@@ -103,7 +103,7 @@ function GameItemLegend() {
             </div>
           </div>
           <div className="legend-item hstack">
-            <span>Both games cancelled</span>
+            <span>Cancelled</span>
             <div className="legend-key">
               <div className="vr status-bar cancelled"></div>
             </div>
