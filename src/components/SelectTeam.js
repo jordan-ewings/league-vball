@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import { useOptions, useLeague } from '../contexts/SessionContext';
-import { useFirebase, useLeaguePaths, useTeams } from '../firebase/useFirebase';
+import { useTeams } from '../firebase/useFirebase';
 
 import {
   ContCard,
@@ -17,7 +17,6 @@ export default function TeamSelect() {
   const { leagueId } = useLeague();
   const { favTeam, setFavTeam } = useOptions();
   const { data: teams } = useTeams();
-
   if (!leagueId) return null;
 
   return (

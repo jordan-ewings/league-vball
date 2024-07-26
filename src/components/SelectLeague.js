@@ -6,7 +6,6 @@ import {
   Menu,
   MenuCollapsible,
   RadioMenuItem,
-  MenuItem,
 } from '../components/common';
 
 /* ---------------------------------- */

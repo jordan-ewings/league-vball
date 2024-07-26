@@ -1,20 +1,15 @@
 /* ---------------------------------- */
 // Schedule
 
-import React, { useState, useEffect, useMemo, useCallback, memo, useRef, useLayoutEffect } from 'react';
-import { onChildAdded, ref, off, set, get } from 'firebase/database';
-import { db } from '../firebase/firebase';
-import { useFirebase, useWeeks, useTeams, useFirebaseCache, useLeaguePaths, useGames, store, readAllGames } from '../firebase/useFirebase';
+import React, { useMemo } from 'react';
+import { Fade } from 'react-bootstrap';
+import { useWeeks, useGames } from '../firebase/useFirebase';
 import { useAuth } from '../contexts/SessionContext';
 import {
-  MainHeader,
   ContCard,
   SpinnerBlock,
   CheckboxButton,
 } from './common';
-
-import { Fade } from 'react-bootstrap';
-
 import GameItem from './GameItem';
 
 /* ---------------------------------- */

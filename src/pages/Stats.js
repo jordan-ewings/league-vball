@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo, useCallback, memo, useRef, createRef } from 'react';
-import { useNavigate, useLocation, useParams } from 'react-router-dom';
-import { useAuth, useLeague, useOptions, useNavHidden } from '../contexts/SessionContext';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useAuth } from '../contexts/SessionContext';
 import { toggleNav } from '../components/Navbar';
-import { useLeaguePaths, useFirebase, useTeams, useWeeks, useStats, useFirebaseCache } from '../firebase/useFirebase';
-import { get, child, ref, onValue, off, set, update, increment } from "firebase/database";
+import { useLeaguePaths, useTeams, useWeeks, useStats } from '../firebase/useFirebase';
+import { ref, update, increment } from "firebase/database";
+import { db } from '../firebase/firebase';
 
 import {
   MainHeader,
@@ -11,10 +12,8 @@ import {
   Menu,
   MenuItem,
   TeamLabel,
-  ButtonInline,
   Stepper,
 } from '../components/common';
-import { db } from '../firebase/firebase';
 
 /* ---------------------------------- */
 // WeekStats

@@ -1,10 +1,11 @@
 /* ---------------------------------- */
 // Schedule
 
-import React, { useState, useEffect, useMemo, useCallback, memo, useRef, useLayoutEffect } from 'react';
-import { useLeaguePaths, useFirebase, useWeeks, useFirebaseCache, store } from '../firebase/useFirebase';
-import { Storage } from '../contexts/SessionContext';
+import React, { useState, useEffect, useMemo } from 'react';
 import { isPlatform } from '@ionic/react';
+import { useWeeks } from '../firebase/useFirebase';
+import { Storage } from '../contexts/SessionContext';
+
 import { MainHeader, SpinnerBlock } from '../components/common';
 import WeekGames from '../components/WeekGames';
 import WeekButtons from '../components/WeekFilter';
@@ -14,27 +15,15 @@ import WeekButtons from '../components/WeekFilter';
 export default function Schedule() {
 
   const { data: weeks } = useWeeks();
-  const currentWeek = getCurrentWeek(weeks);
+  const currentWeek = useMemo(() => getCurrentWeek(weeks), [weeks]);
   const [activeWeek, setActiveWeek] = useState(null);
 
   useEffect(() => {
     if (currentWeek) {
       setActiveWeek(Storage.getExpire('lastWeek') || currentWeek);
-      // const storedWeek = Storage.getExpire('lastWeek');
-      // if (storedWeek) {
-      //   if (weeks[storedWeek]) {
-      //     setActiveWeek(storedWeek);
-      //   } else {
-      //     Storage.remove('lastWeek');
-      //     setActiveWeek(currentWeek);
-      //   }
-      // } else {
-      //   setActiveWeek(currentWeek);
-      // }
     }
   }, [currentWeek]);
 
-  // store last week for one hour
   useEffect(() => {
     if (activeWeek) Storage.setExpire('lastWeek', activeWeek, 1000 * 60 * 60);
   }, [activeWeek]);

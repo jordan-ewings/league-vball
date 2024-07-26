@@ -2,11 +2,10 @@ import React, { useState, useEffect, useSyncExternalStore, useRef, useMemo } fro
 import { get, off, child, ref, onValue, set, update, onChildAdded, onChildChanged } from "firebase/database";
 import { db } from "./firebase";
 import { useLeague } from "../contexts/SessionContext";
-import { type } from "@testing-library/user-event/dist/type";
 
 /* ---------------------------------- */
 
-export const store = new Map();
+const store = new Map();
 const subscribers = new Map();
 const listeners = new Set();
 
@@ -95,7 +94,6 @@ function getDataSnapPath(dataSnapshot) {
 
 /* ---------------------------------- */
 // initLeague
-// store leagueId
 
 function initLeague(leagueId) {
   store.set('leagueId', leagueId);

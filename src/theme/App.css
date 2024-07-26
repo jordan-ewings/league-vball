@@ -165,10 +165,6 @@ nav .nav-link:not(.flex-grow-0) {
   flex-grow: 1;
 }
 
-/* nav .nav-link.active {
-  color: var(--ios-text-primary);
-} */
-
 nav .nav-link:has(i) {
   padding-bottom: 0;
   justify-self: center;
@@ -200,19 +196,6 @@ nav.hidden {
 .page {
   position: relative;
 }
-
-/* .page {
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  display: flex;
-  position: absolute;
-  flex-direction: column;
-  justify-content: space-between;
-  contain: layout size style;
-  z-index: 0
-} */
 
 /* ---------------------------------- */
 

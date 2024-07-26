@@ -39,7 +39,6 @@ const AnimatedRoutes = () => {
 
   const location = useLocation();
   const { leagueId } = useLeague();
-
   if (!leagueId) return null;
 
   return (

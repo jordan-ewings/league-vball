@@ -1,36 +1,24 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import { ClipLoader } from 'react-spinners';
 import { IonIcon } from '@ionic/react';
-import {
-  checkmarkCircleOutline,
-  checkmarkCircle,
-  checkmarkOutline,
-  ellipseOutline,
-  banOutline,
-} from 'ionicons/icons';
+import { checkmarkCircle, ellipseOutline, } from 'ionicons/icons';
 
 import { Collapse } from 'react-bootstrap';
 
-import { useOptions, useLeague } from '../contexts/SessionContext';
-import { useFirebase, useStats } from '../firebase/useFirebase';
+import { useOptions } from '../contexts/SessionContext';
+import { useStats } from '../firebase/useFirebase';
 
 /* ---------------------------------- */
-// stdChild
+// helpers
 
-function stdChild(arg) {
-  return arg ? (typeof arg === 'string' ? <span>{arg}</span> : arg) : null;
-}
-
-function themeColor(color) {
-  return getComputedStyle(document.documentElement).getPropertyValue(`--ios-${color}`).trim();
-}
+const stdChild = arg => arg ? (typeof arg === 'string' ? <span>{arg}</span> : arg) : null;
+const themeColor = color => getComputedStyle(document.documentElement).getPropertyValue(`--ios-${color}`).trim();
+const getPropsWith = (props, classUpdate) => ({ ...props, className: ('className' in props) ? [classUpdate, props.className].join(' ') : classUpdate });
 
 /* ---------------------------------- */
 // MainHeader
 
 export function MainHeader({ children }) {
-
   return (
     <div className={`main-header`}>
       {children && <div className="main-header-content">{children}</div>}
@@ -38,7 +26,6 @@ export function MainHeader({ children }) {
   )
 }
 
-// MainHeader title
 MainHeader.Title = function MainHeaderTitle({ text }) {
   return (
     <div className="main-header-title">
@@ -47,9 +34,7 @@ MainHeader.Title = function MainHeaderTitle({ text }) {
   );
 }
 
-// MainHeader back button
 MainHeader.BackButton = function MainHeaderBackButton({ onClick }) {
-
   return (
     <ButtonInline
       className="btn-back"
@@ -60,11 +45,8 @@ MainHeader.BackButton = function MainHeaderBackButton({ onClick }) {
   );
 }
 
-// MainHeader save button
 MainHeader.SaveButton = function MainHeaderSaveButton({ onClick, disabled = false }) {
-
   const [status, setStatus] = useState('idle');
-
   const handleClick = () => {
     if (status !== 'idle') return;
     setStatus('pending');
@@ -78,7 +60,6 @@ MainHeader.SaveButton = function MainHeaderSaveButton({ onClick, disabled = fals
         console.error('Error updating data:', error);
       });
   }
-
   const icon = status === 'pending' ? 'fa-solid fa-spinner fa-spin' : status === 'done' ? 'fa-solid fa-check' : null;
   const text = status !== 'idle' ? null : 'Save';
   const isDisabled = status === 'idle' ? disabled : false;
@@ -98,9 +79,8 @@ MainHeader.SaveButton = function MainHeaderSaveButton({ onClick, disabled = fals
 // ContCard
 
 export function ContCard({ children, title, footer, loading, ...props }) {
-
   return (
-    <div className={getClassName('cont-card', props)}>
+    <div {...getPropsWith(props, 'cont-card')}>
       <div className="cont-card-title">{stdChild(title)}</div>
       <div className="cont-card-body">
         {loading
@@ -113,42 +93,7 @@ export function ContCard({ children, title, footer, loading, ...props }) {
 }
 
 /* ---------------------------------- */
-// MenuItem
-
-// export function MenuItem({ className = '', icon, main, trail, nav = false, onClick }) {
-
-//   return (
-//     <div className={`menu-item ${className}`} {...(onClick && { role: 'button' })} onClick={onClick}>
-//       <div className="label">
-//         {icon}
-//       </div>
-//       <div className="contents vstack justify-content-center">
-//         <div className="hstack">
-//           <div className="main hstack flex-grow-1 flex-shrink-1 overflow-hidden">{stdChild(main)}</div>
-//           <div className="trail hstack flex-grow-0 flex-shrink-0">
-//             {stdChild(trail)}
-//             {nav && <div className="drill"><i className="fa-solid fa-chevron-right"></i></div>}
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
-
-function getClassName(base, props) {
-  let classNames = base;
-  if ('className' in props) classNames += ` ${props.className}`;
-  return classNames;
-}
-
-// added classes to props (if props has className, append classes to it)
-// return new props object
-function getPropsWith(props, classUpdate) {
-  return { ...props, className: ('className' in props) ? [classUpdate, props.className].join(' ') : classUpdate };
-}
-
-/* ---------------------------------- */
-
+// Menus
 
 export function Menu({ children, ...props }) {
   return (
@@ -158,7 +103,6 @@ export function Menu({ children, ...props }) {
   );
 }
 
-// menu with one menu item that, when clicked, expands to show a sub-menu with additional items
 export function MenuCollapsible({ children, title, expanded, inactive, onClick }) {
 
   const open = expanded ? true : false;
@@ -181,6 +125,8 @@ export function MenuCollapsible({ children, title, expanded, inactive, onClick }
   );
 }
 
+/* ---------------------------------- */
+// MenuItems
 
 export function MenuItem({ main, trail, nav, inactive, ...props }) {
 
@@ -201,9 +147,6 @@ export function MenuItem({ main, trail, nav, inactive, ...props }) {
     </div>
   );
 }
-
-/* ---------------------------------- */
-// RadioMenuItem
 
 export function RadioMenuItem({ title, selected, ...props }) {
 
@@ -256,12 +199,27 @@ export function CheckboxButton({ checked, disabled, ...props }) {
   );
 }
 
+/* ---------------------------------- */
+// ButtonInline
 
+export function ButtonInline({ icon, text, onClick, disabled, ...props }) {
+
+  const classUpdates = ['button-inline'];
+  if (disabled) classUpdates.push('disabled');
+
+  return (
+    <div {...getPropsWith(props, classUpdates.join(' '))} onClick={onClick} role="button">
+      {icon && <i className={icon}></i>}
+      <span>{text}</span>
+    </div>
+  );
+}
 
 /* ---------------------------------- */
 // TeamLabel
 
 export function TeamLabel({ team, withRecord = false }) {
+
   const { favTeam } = useOptions();
   const s = useStats('games', 'ALL');
   const stats = (!s.loading) ? s.data : null;
@@ -300,34 +258,19 @@ export function Spinner() {
 /* ---------------------------------- */
 // Loader
 
-export function SpinnerBlock({ align = 'start', size = '1.5rem' }) {
+export function SpinnerBlock({ size = '1.5rem', ...props }) {
 
-  const divClass = `d-flex flex-column align-self-stretch justify-content-center align-items-${align}`;
+  const classUpdates = ['spinner-block', 'vstack', 'justify-content-center', 'align-items-center'];
 
   return (
-    <div className={divClass}>
+    <div {...getPropsWith(props, classUpdates.join(' '))}>
       <ClipLoader color={'#0a84ff'} size={size} />
     </div>
   );
 
 }
 
-/* ---------------------------------- */
-// ButtonInline
 
-export function ButtonInline({ icon, text, onClick, disabled = false, className = '' }) {
-
-  let classNames = 'button-inline';
-  if (className) classNames += ` ${className}`;
-  if (disabled) classNames += ' disabled';
-
-  return (
-    <div className={classNames} onClick={onClick} role="button">
-      {icon && <i className={icon}></i>}
-      <span>{text}</span>
-    </div>
-  );
-}
 
 /* ---------------------------------- */
 // Stepper
@@ -337,7 +280,6 @@ export function Stepper({ initialValue, onChange, disabled = false }) {
   const [value, setValue] = useState(initialValue);
   const change = value - initialValue;
 
-  // update state and provide new value to parent
   const handleClick = (diff) => {
     const newValue = value + diff;
     if (newValue < 0) return;
@@ -383,13 +325,9 @@ export const TextInput = React.forwardRef(({ type, placeholder, onChange }, ref)
 // Table
 
 export function Table({ children, ...props }) {
-
-  let classNames = "table";
-  if ('className' in props) classNames += ' ' + props.className;
-
   return (
     <div className="table-responsive">
-      <table className={classNames}>
+      <table {...getPropsWith(props, 'table')}>
         {children}
       </table>
     </div>

@@ -6,7 +6,6 @@ import {
   ContCard,
   Menu,
   MenuItem,
-  Switch,
   Spinner,
   ButtonInline,
   TextInput,

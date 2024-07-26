@@ -64,8 +64,6 @@
   align-self: stretch;
   padding-bottom: 2rem;
   min-width: 350px;
-  /* max-width: 500px; */
-  /* margin-bottom: 2rem; */
 }
 
 .cont-card-title,
@@ -94,7 +92,6 @@
   display: flex;
   flex-direction: column;
   align-self: stretch;
-  /* padding: 0.1rem 0; */
   margin-inline: .75rem;
   background-color: var(--ios-bg-secondary);
   border-radius: 10px;
@@ -212,7 +209,6 @@
   color: var(--ios-link);
   font-size: var(--icon-size);
   line-height: var(--icon-size);
-  /* transition: all 0.2s; */
 }
 
 /* RadioMenuItem ---------------------------------------- */
@@ -229,7 +225,6 @@
 
 .checkbox.checked {
   color: var(--ios-blue);
-  /* transition: color 0.1s ease-in-out; */
 }
 
 .checkbox>ion-icon {

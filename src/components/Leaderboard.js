@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useLeaguePaths, useFirebase, useTeams, useStats } from '../firebase/useFirebase';
+import { useTeams, useStats } from '../firebase/useFirebase';
 import {
   ContCard,
   TeamLabel,

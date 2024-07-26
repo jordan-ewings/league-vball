@@ -1,9 +1,9 @@
 /* ---------------------------------- */
 // Schedule
 
-import React, { useState, useEffect, useMemo, useCallback, memo, useRef, useLayoutEffect } from 'react';
+import React, { useLayoutEffect } from 'react';
 import { Button, ButtonGroup } from 'react-bootstrap';
-import { useFirebase, useWeeks, useFirebaseCache } from '../firebase/useFirebase';
+import { useWeeks } from '../firebase/useFirebase';
 import { useAuth } from '../contexts/SessionContext';
 
 /* ---------------------------------- */
@@ -16,14 +16,12 @@ export default function WeekButtons({ activeWeek, setActiveWeek }) {
 
   useLayoutEffect(() => {
     const activeButton = document.querySelector('.week-filter-btn.active');
-    if (activeButton) {
-      activeButton.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-    }
+    if (activeButton) activeButton.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
   }, [activeWeek, weeks]);
 
   /* -------------------- */
   // render
-  // add week button at end if controls
+
   return (
     <div className="week-filter">
       <ButtonGroup className="week-filter-btn-group">

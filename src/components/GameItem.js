@@ -1,10 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback, memo, useRef, createRef } from 'react';
-import { useFirebase, useTeams, useLeaguePaths, readAllGames } from '../firebase/useFirebase';
-import {
-  Collapse,
-  Alert,
-} from 'react-bootstrap';
-
+import { useTeams, useLeaguePaths, readAllGames } from '../firebase/useFirebase';
+import { Collapse, Alert, } from 'react-bootstrap';
 import {
   TeamLabel,
   IconButton,
@@ -71,15 +67,6 @@ export default function GameItem({ game, readOnly, isDisplayed }) {
 
   useEffect(() => {
     if (match) handleMatchUpdate();
-    // if (!form) return;
-    // if (formPending) {
-    //   setFormPending(false);
-    //   closeForm();
-    //   return;
-    // }
-    // setFormMatch(copy(match));
-    // setAlert(true);
-    // console.log('Alert: game updated');
   }, [match]);
 
   useEffect(() => {

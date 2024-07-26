@@ -8,8 +8,6 @@ import LeagueSelect from '../components/SelectLeague';
 import AdminAccess from '../components/Login';
 import TeamSelect from '../components/SelectTeam';
 
-// import { useStore, store, readAllGames } from '../firebase/useFirebase';
-
 /* ---------------------------------- */
 
 export default function Home() {

@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useMemo, useCallback, memo, useRef, createRef } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useLeaguePaths, useFirebase, useWeeks, useFirebaseCache } from '../firebase/useFirebase';
-
+import { useWeeks } from '../firebase/useFirebase';
 import { ContCard, Menu, MenuItem } from './common';
 
 /* ---------------------------------- */
